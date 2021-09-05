@@ -17,4 +17,6 @@ Vagrant.configure("2") do |config|
   # run shell commands in the BOX
   config.vm.provision "shell", path: "install.sh", privileged: true
   config.vm.provision "shell", path: "post_install.sh", privileged: false
+  # default route
+  config.vm.provision "shell", path: "add_dg.sh", privileged: true, run: "always"
 end
