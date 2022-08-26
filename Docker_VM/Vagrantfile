@@ -1,5 +1,5 @@
-BOX_IMAGE = "generic/ubuntu2004"
-BOX_VERSION = "3.2.24"
+BOX_IMAGE = "generic/ubuntu2204"
+BOX_VERSION = "4.1.8"
 
 Vagrant.configure("2") do |config|
   config.vm.define "dockervm" do |subconfig|
