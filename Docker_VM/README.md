@@ -1,5 +1,5 @@
 # Docker_VM
 ## DRIVER = virtualbox
-## IMAGE = "generic/ubuntu2004"
-## VERSION = "3.2.24"
+## IMAGE = "generic/ubuntu2204"
+## VERSION = "4.1.8"
 ## MEM = 4GB
