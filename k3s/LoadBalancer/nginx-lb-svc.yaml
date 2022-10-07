@@ -4,7 +4,7 @@ metadata:
   name: nginx-lb-svc
 spec:
   selector:
-    web: nginx
+    app: nginx
   ports:
     - port: 8080
       targetPort: 80
