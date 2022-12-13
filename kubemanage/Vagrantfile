@@ -1,0 +1,23 @@
+BOX_IMAGE = "generic/ubuntu2204"
+BOX_VERSION = "4.1.8"
+
+Vagrant.configure("2") do |config|
+  config.vm.define "mytestbox" do |subconfig|
+
+    subconfig.vm.provider :virtualbox do |v| 
+      # v.gui = true
+      v.customize ["modifyvm", :id, "--memory", "2048"] 
+    end
+    subconfig.vm.box = BOX_IMAGE
+    subconfig.vm.box_version = BOX_VERSION
+    subconfig.vm.box_check_update  = false
+    # hostname and IP
+    subconfig.vm.hostname = "kubemanage"
+    # https://developer.hashicorp.com/vagrant/docs/providers/virtualbox/networking#virtualbox-host-only-networks
+    subconfig.vm.network :private_network, ip: "192.168.59.200", name: "VirtualBox Host-Only Ethernet Adapter #3"
+  end
+  # run shell commands in the BOX
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   sudo echo "192.168.1.155 mytestbox" | sudo tee -a /etc/hosts
+  # SHELL
+end
