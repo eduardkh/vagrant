@@ -1,8 +1,9 @@
 BOX_IMAGE = "generic/rocky8"
 BOX_VERSION = "4.2.10"
+BOX_NAME = "rocky8"
 
 Vagrant.configure("2") do |config|
-  config.vm.define "mytestbox" do |subconfig|
+  config.vm.define BOX_NAME do |subconfig|
 
     subconfig.vm.provider :virtualbox do |v| 
       # v.gui = true
@@ -12,11 +13,11 @@ Vagrant.configure("2") do |config|
     subconfig.vm.box_version = BOX_VERSION
     subconfig.vm.box_check_update  = false
     # hostname and IP
-    subconfig.vm.hostname = "mytestbox"
+    subconfig.vm.hostname = BOX_NAME
     subconfig.vm.network :public_network, ip: "192.168.1.154", hostname: true, bridge: "Qualcomm Atheros AR8151 PCI-E Gigabit Ethernet Controller (NDIS 6.30)"
   end
   # run shell commands in the BOX
   config.vm.provision "shell", inline: <<-SHELL
-    sudo echo "192.168.1.154 rocky8" | sudo tee -a /etc/hosts
+    sudo echo "192.168.1.154 $BOX_NAME" | sudo tee -a /etc/hosts
   SHELL
 end
