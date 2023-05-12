@@ -1,0 +1,26 @@
+BOX_IMAGE = "generic/rocky8"
+BOX_VERSION = "4.2.10"
+MEMORY = "4096"
+IP = "192.168.1.152"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
+BOX_NAME = "rocky8-kibana"
+
+Vagrant.configure("2") do |config|
+  config.vm.define BOX_NAME do |subconfig|
+
+    subconfig.vm.provider :virtualbox do |v| 
+      # v.gui = true
+      v.customize ["modifyvm", :id, "--memory", MEMORY] 
+    end
+    subconfig.vm.box = BOX_IMAGE
+    subconfig.vm.box_version = BOX_VERSION
+    subconfig.vm.box_check_update  = false
+    # hostname and IP
+    subconfig.vm.hostname = BOX_NAME
+    subconfig.vm.network :public_network, ip: IP, hostname: true, bridge: BRIDGE_INTERFACE
+  end
+  # run shell commands in the BOX
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo echo "$IP $BOX_NAME" | sudo tee -a /etc/hosts
+  SHELL
+end
