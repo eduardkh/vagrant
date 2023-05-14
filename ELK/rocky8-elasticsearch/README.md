@@ -61,5 +61,5 @@ curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@loca
 > Generate enrollment token for Kibana
 
 ```bash
-/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana
+/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana -a 192.168.1.151:9200
 ```
