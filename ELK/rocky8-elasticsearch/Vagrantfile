@@ -3,7 +3,7 @@ BOX_VERSION = "4.2.10"
 MEMORY = "4096"
 IP = "192.168.1.151"
 BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
-BOX_NAME = "rocky8-kibana"
+BOX_NAME = "rocky8-elasticsearch"
 
 Vagrant.configure("2") do |config|
   config.vm.define BOX_NAME do |subconfig|
