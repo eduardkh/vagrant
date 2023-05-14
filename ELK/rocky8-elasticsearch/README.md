@@ -57,3 +57,9 @@ curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic:password https://l
 # or
 curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
 ```
+
+> Generate enrollment token for Kibana
+
+```bash
+/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana
+```
