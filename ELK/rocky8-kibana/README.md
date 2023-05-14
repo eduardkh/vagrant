@@ -41,3 +41,9 @@ systemctl start kibana.service
 ```bash
 systemctl status kibana.service
 ```
+
+> install nginx
+
+```bash
+dnf install nginx -y
+```
