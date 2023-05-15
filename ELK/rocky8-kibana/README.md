@@ -96,7 +96,7 @@ http {
 
     server {
         listen 80;
-        server_name 192.168.99.151;
+        server_name 192.168.1.151;
 
         location / {
             proxy_pass http://127.0.0.1:5601;
@@ -114,4 +114,35 @@ EOF
 sudo nginx -t
 sudo systemctl restart nginx
 setsebool -P httpd_can_network_connect 1
+```
+
+> install fleet (from kibana GUI)
+
+```bash
+# set endpoint (https://192.168.1.151:8220)
+curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.7.1-linux-x86_64.tar.gz
+tar xzvf elastic-agent-8.7.1-linux-x86_64.tar.gz
+cd elastic-agent-8.7.1-linux-x86_64
+sudo ./elastic-agent install \
+  --fleet-server-es=https://10.0.2.15:9200 \
+  --fleet-server-service-token=<TOKEN> \
+  --fleet-server-policy=fleet-server-policy \
+  --fleet-server-es-ca-trusted-fingerprint=<FINGERPRINT>
+```
+
+> allow 8220 on host firewall
+
+```bash
+firewall-cmd --zone=public --permanent --add-port=8220/tcp
+firewall-cmd --reload
+```
+
+> on agent (windows box)
+
+```bash
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest -Uri https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.7.1-windows-x86_64.zip -OutFile elastic-agent-8.7.1-windows-x86_64.zip
+Expand-Archive .\elastic-agent-8.7.1-windows-x86_64.zip -DestinationPath .
+cd elastic-agent-8.7.1-windows-x86_64
+.\elastic-agent.exe install --url=https://192.168.1.151:8220 --enrollment-token=<TOKEN>
 ```
