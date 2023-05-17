@@ -63,3 +63,14 @@ curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@loca
 ```bash
 /usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana --url https://192.168.1.151:9200
 ```
+
+> set and check jvm heap size
+
+```bash
+echo '-Xms4g
+-Xmx4g' > /etc/elasticsearch/jvm.options.d/memory.options
+
+systemctl restart elasticsearch.service
+
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200/_nodes/_all/jvm?pretty
+```
