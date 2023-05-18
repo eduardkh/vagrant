@@ -15,7 +15,7 @@ nmcli connection modify System\ eth0 ipv4.never-default yes # unset D.G on eth0
 nmcli connection modify System\ eth1 ipv4.gateway 192.168.1.254 # set D.G on eth1
 nmcli connection modify System\ eth1 ipv4.route-metric 0 # lower metric is better
 reboot now
-ip route show
+ip route show # after restart
 ```
 
 > add elasticsearch repo
@@ -39,18 +39,9 @@ type=rpm-md' > /etc/yum.repos.d/elasticsearch.repo
 dnf install --enablerepo=elasticsearch elasticsearch -y
 ```
 
-> set and check jvm heap size
-
-```bash
-echo '-Xms4g
--Xmx4g' > /etc/elasticsearch/jvm.options.d/memory.options
-```
-
 > enable and start elasticsearch
 
 ```bash
-sed -i.bak -e 's/^#node.name: node-1$/node.name: rocky8-elasticsearch01/' -e 's/^#network.host: 192.168.0.1$/network.host: 192.168.1.151/' /etc/elasticsearch/elasticsearch.yml
-
 systemctl daemon-reload
 systemctl enable elasticsearch.service
 systemctl start elasticsearch.service
@@ -76,8 +67,31 @@ curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic https://localhost:
 curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic:password https://localhost:9200
 # or
 curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
-curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200/_nodes/_all/jvm?pretty
+```
 
+> set and check jvm heap size
+
+```bash
+echo '-Xms4g
+-Xmx4g' > /etc/elasticsearch/jvm.options.d/memory.options
+systemctl restart elasticsearch.service
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200/_nodes/_all/jvm?pretty
+```
+
+> change elasticsearch.yml
+
+```bash
+sed -i.bak \
+-e 's/^#node.name: node-1$/node.name: rocky8-elasticsearch01/' \
+-e 's/^#network.host: 192.168.0.1$/network.host: 192.168.1.151/' \
+-e 's/^#http.port: 9200$/http.port: 9200/' \
+/etc/elasticsearch/elasticsearch.yml
+
+diff /etc/elasticsearch/elasticsearch.yml.bak /etc/elasticsearch/elasticsearch.yml
+
+systemctl restart elasticsearch.service
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
 ```
 
 > Generate enrollment token for Kibana
