@@ -7,6 +7,14 @@
 
 ## manual install as root
 
+> in vagrant only (set default gateway on routed interface e.g. eth1)
+
+```bash
+nmcli connection modify System\ eth1 ipv4.gateway 192.168.1.254
+systemctl restart NetworkManager
+ip route show
+```
+
 > add elasticsearch repo
 
 ```bash
