@@ -10,8 +10,11 @@
 > in vagrant only (set default gateway on routed interface e.g. eth1)
 
 ```bash
-nmcli connection modify System\ eth1 ipv4.gateway 192.168.1.254
-systemctl restart NetworkManager
+# as root
+nmcli connection modify System\ eth0 ipv4.never-default yes # unset D.G on eth0
+nmcli connection modify System\ eth1 ipv4.gateway 192.168.1.254 # set D.G on eth1
+nmcli connection modify System\ eth1 ipv4.route-metric 0 # lower metric is better
+reboot now
 ip route show
 ```
 
