@@ -44,9 +44,6 @@ dnf install --enablerepo=elasticsearch elasticsearch -y
 ```bash
 echo '-Xms4g
 -Xmx4g' > /etc/elasticsearch/jvm.options.d/memory.options
-
-systemctl restart elasticsearch.service
-
 ```
 
 > enable and start elasticsearch
