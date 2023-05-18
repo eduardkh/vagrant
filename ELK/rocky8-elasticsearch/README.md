@@ -47,7 +47,6 @@ echo '-Xms4g
 
 systemctl restart elasticsearch.service
 
-curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200/_nodes/_all/jvm?pretty
 ```
 
 > enable and start elasticsearch
@@ -80,6 +79,8 @@ curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic https://localhost:
 curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic:password https://localhost:9200
 # or
 curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200/_nodes/_all/jvm?pretty
+
 ```
 
 > Generate enrollment token for Kibana
