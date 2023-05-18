@@ -85,17 +85,21 @@ curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@loca
 sed -i.bak \
 -e 's/^#node.name: node-1$/node.name: rocky8-elasticsearch01/' \
 -e 's/^#network.host: 192.168.0.1$/network.host: 192.168.1.151/' \
+-e 's/^#transport.host: 0.0.0.0$/transport.host: 192.168.1.151/' \
+-e 's/^http.host: 0.0.0.0$/http.host: 192.168.1.151/' \
 -e 's/^#http.port: 9200$/http.port: 9200/' \
 /etc/elasticsearch/elasticsearch.yml
 
 diff /etc/elasticsearch/elasticsearch.yml.bak /etc/elasticsearch/elasticsearch.yml
 
 systemctl restart elasticsearch.service
+systemctl status elasticsearch.service
 curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.168.1.151:9200/_cat/nodes
 ```
 
 > Generate enrollment token for Kibana
 
 ```bash
-/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana --url https://192.168.1.151:9200
+/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -f -s kibana --url "https://192.168.1.151:9200"
 ```
