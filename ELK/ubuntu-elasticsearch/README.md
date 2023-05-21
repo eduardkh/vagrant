@@ -1,11 +1,11 @@
-# rocky8-elasticsearch
+# ubuntu-elasticsearch
 
 > DRIVER = virtualbox
-> IMAGE = "generic/rocky8"
-> VERSION = "4.2.10"
+> IMAGE = generic/ubuntu2204
+> VERSION = "4.2.16"
 > MEM = 4GB
 
-## manual install as root
+## elasticsearch (manual install as root)
 
 > in vagrant only (set default gateway on routed interface e.g. eth1)
 
@@ -18,25 +18,14 @@ reboot now
 ip route show # after restart
 ```
 
-> add elasticsearch repo
+> add and install elasticsearch repo
 
 ```bash
-rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
+apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
+apt-get update && sudo apt-get install elasticsearch
 
-echo '[elasticsearch]
-name=Elasticsearch repository for 8.x packages
-baseurl=https://artifacts.elastic.co/packages/8.x/yum
-gpgcheck=1
-gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
-enabled=0
-autorefresh=1
-type=rpm-md' > /etc/yum.repos.d/elasticsearch.repo
-```
-
-> install elasticsearch
-
-```bash
-dnf install --enablerepo=elasticsearch elasticsearch -y
 ```
 
 > enable and start elasticsearch
@@ -62,28 +51,28 @@ systemctl status elasticsearch.service
 > check elasticsearch service (curl)
 
 ```bash
-curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic https://localhost:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic https://192.168.1.151:9200
 # or
-curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic:password https://localhost:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic:password https://192.168.1.151:9200
 # or
-curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.168.1.151:9200
 ```
 
-> set and check jvm heap size
+> set and check jvm heap size (optional)
 
 ```bash
 echo '-Xms4g
 -Xmx4g' > /etc/elasticsearch/jvm.options.d/memory.options
 systemctl restart elasticsearch.service
-curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
-curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200/_nodes/_all/jvm?pretty
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.168.1.151:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.168.1.151:9200/_nodes/_all/jvm?pretty
 ```
 
 > change elasticsearch.yml
 
 ```bash
 sed -i.bak \
--e 's/^#node.name: node-1$/node.name: rocky8-elasticsearch01/' \
+-e 's/^#node.name: node-1$/node.name: ubuntu-elasticsearch01/' \
 -e 's/^#network.host: 192.168.0.1$/network.host: 192.168.1.151/' \
 -e 's/^#transport.host: 0.0.0.0$/transport.host: 192.168.1.151/' \
 -e 's/^http.host: 0.0.0.0$/http.host: 192.168.1.151/' \
@@ -94,7 +83,7 @@ diff /etc/elasticsearch/elasticsearch.yml.bak /etc/elasticsearch/elasticsearch.y
 
 systemctl restart elasticsearch.service
 systemctl status elasticsearch.service
-curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@localhost:9200
+curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.168.1.151:9200
 curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.168.1.151:9200/_cat/nodes
 ```
 
