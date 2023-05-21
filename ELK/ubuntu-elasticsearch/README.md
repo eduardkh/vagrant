@@ -173,3 +173,12 @@ systemctl restart nginx.service
 ```bash
 /usr/share/kibana/bin/kibana-verification-code
 ```
+
+> Encryption keys
+
+```bash
+# generate
+/usr/share/kibana/bin/kibana-encryption-keys generate
+# place in kibana.yml
+echo 'KEYS' >> /etc/kibana/kibana.yml
+```
