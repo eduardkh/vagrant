@@ -87,8 +87,31 @@ curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.
 curl --cacert /etc/elasticsearch/certs/http_ca.crt https://elastic:password@192.168.1.151:9200/_cat/nodes
 ```
 
+### kibana
+
+> install kibana
+
+```bash
+apt-get update && apt-get install kibana
+```
+
+> enable and start kibana
+
+```bash
+systemctl daemon-reload
+systemctl enable kibana.service
+systemctl start kibana.service
+systemctl status kibana.service
+```
+
 > Generate enrollment token for Kibana
 
 ```bash
 /usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -f -s kibana --url "https://192.168.1.151:9200"
+```
+
+> enter the token in kibana-setup
+
+```bash
+/usr/share/kibana/bin/kibana-setup --enrollment-token <TOKEN>
 ```
