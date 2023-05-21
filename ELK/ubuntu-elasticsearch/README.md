@@ -181,4 +181,5 @@ systemctl restart nginx.service
 /usr/share/kibana/bin/kibana-encryption-keys generate
 # place in kibana.yml
 echo 'KEYS' >> /etc/kibana/kibana.yml
+systemctl restart kibana.service
 ```
