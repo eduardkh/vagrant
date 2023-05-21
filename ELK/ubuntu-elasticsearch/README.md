@@ -167,3 +167,9 @@ EOF
 
 systemctl restart nginx.service
 ```
+
+> kibana-verification-code
+
+```bash
+/usr/share/kibana/bin/kibana-verification-code
+```
