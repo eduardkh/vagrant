@@ -1,5 +1,5 @@
 BOX_IMAGE = "generic/rocky8"
-BOX_VERSION = "4.2.10"
+BOX_VERSION = "4.2.16"
 MEMORY = "16384"
 CPU = "8"
 IP = "192.168.1.151"
@@ -8,14 +8,13 @@ BOX_NAME = "rocky8-elasticsearch"
 
 Vagrant.configure("2") do |config|
   config.vm.define BOX_NAME do |subconfig|
-
-    subconfig.vm.provider :virtualbox do |v| 
+    subconfig.vm.provider :virtualbox do |v|
       # v.gui = true
-      v.customize ["modifyvm", :id, "--memory", MEMORY, "--cpus", CPU] 
+      v.customize ["modifyvm", :id, "--memory", MEMORY, "--cpus", CPU]
     end
     subconfig.vm.box = BOX_IMAGE
     subconfig.vm.box_version = BOX_VERSION
-    subconfig.vm.box_check_update  = false
+    subconfig.vm.box_check_update = false
     # hostname and IP
     subconfig.vm.hostname = BOX_NAME
     subconfig.vm.network :public_network, ip: IP, hostname: true, bridge: BRIDGE_INTERFACE
