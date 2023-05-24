@@ -11,7 +11,7 @@ BOX_NAME = "dockervm"
 Vagrant.configure("2") do |config|
   config.vm.define BOX_NAME do |subconfig|
     subconfig.vm.provider :virtualbox do |v|
-      v.customize ["modifyvm", :id, "--memory", BOX_MEMORY, "--cpus", CPU]
+      v.customize ["modifyvm", :id, "--memory", MEMORY, "--cpus", CPU]
     end
     subconfig.vm.box = BOX_IMAGE
     subconfig.vm.box_version = BOX_VERSION
