@@ -1,21 +1,25 @@
 BOX_IMAGE = "generic/ubuntu2204"
-BOX_VERSION = "4.1.8"
-BOX_MEMORY = "4096"
+BOX_VERSION = "4.2.16"
+MEMORY = "4096"
+CPU = "2"
+IP = "192.168.1.155"
+IP2 = "192.168.245.173"
+BRIDGE_INTERFACE = "Qualcomm Atheros AR8151 PCI-E Gigabit Ethernet Controller (NDIS 6.30)"
+BRIDGE_INTERFACE2 = "VMware Virtual Ethernet Adapter for VMnet1"
 BOX_NAME = "dockervm"
 
 Vagrant.configure("2") do |config|
   config.vm.define BOX_NAME do |subconfig|
-
-    subconfig.vm.provider :virtualbox do |v| 
-      v.customize ["modifyvm", :id, "--memory", BOX_MEMORY] 
+    subconfig.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--memory", BOX_MEMORY, "--cpus", CPU]
     end
     subconfig.vm.box = BOX_IMAGE
     subconfig.vm.box_version = BOX_VERSION
-    subconfig.vm.box_check_update  = false
+    subconfig.vm.box_check_update = false
     # hostname and IP
     subconfig.vm.hostname = BOX_NAME
-    subconfig.vm.network :public_network, ip: "192.168.1.155", :device => "eth1", :adapter => 2, hostname: true, bridge: "Qualcomm Atheros AR8151 PCI-E Gigabit Ethernet Controller (NDIS 6.30)"
-    subconfig.vm.network "public_network", ip: "192.168.245.173", :device => "eth2", :adapter => 3, :netmask => "255.255.255.0", bridge: "VMware Virtual Ethernet Adapter for VMnet1"
+    subconfig.vm.network :public_network, ip: IP, :device => "eth1", :adapter => 2, hostname: true, bridge: BRIDGE_INTERFACE
+    subconfig.vm.network "public_network", ip: IP2, :device => "eth2", :adapter => 3, :netmask => "255.255.255.0", bridge: BRIDGE_INTERFACE2
   end
   # run shell commands in the BOX
   config.vm.provision "shell", path: "install.sh", privileged: true
