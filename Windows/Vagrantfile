@@ -1,0 +1,22 @@
+BOX_IMAGE = "gusztavvargadr/windows-10"
+BOX_VERSION = "2202.0.2305"
+BOX_MEMORY = "4096"
+CPU = "4"
+IP = "192.168.1.160"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
+
+Vagrant.configure("2") do |config|
+  # config.vm.box = "gusztavvargadr/windows-10"
+
+  config.vm.provider :virtualbox do |v|
+    # v.gui = true
+    v.customize ["modifyvm", :id, "--memory", BOX_MEMORY]
+  end
+  config.vm.box = BOX_IMAGE
+  config.vm.box_version = BOX_VERSION
+  config.vm.box_check_update = false
+  config.winrm.max_tries = 300 # default is 20
+  config.winrm.retry_delay = 2 #seconds. This is the defaul value and just here for documentation.
+  # hostname and IP
+  config.vm.network "public_network", ip: IP, bridge: BRIDGE_INTERFACE
+end
