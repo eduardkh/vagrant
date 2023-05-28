@@ -1,6 +1,6 @@
 BOX_IMAGE = "generic/ubuntu2204"
 BOX_VERSION = "4.2.16"
-MEMORY = "4096"
+BOX_MEMORY = "4096"
 CPU = "2"
 IP = "192.168.1.165"
 IP2 = "192.168.245.173"
@@ -11,8 +11,8 @@ BOX_NAME = "dockervm"
 Vagrant.configure("2") do |config|
   config.vm.define BOX_NAME do |subconfig|
     subconfig.vm.provider "vmware_desktop" do |v|
-      v.vmx["memsize"] = "4096"
-      v.vmx["numvcpus"] = "4"
+      v.vmx["memsize"] = BOX_MEMORY
+      v.vmx["numvcpus"] = CPU
     end
     subconfig.vm.box = BOX_IMAGE
     subconfig.vm.box_version = BOX_VERSION
