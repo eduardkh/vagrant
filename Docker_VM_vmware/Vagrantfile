@@ -4,7 +4,7 @@ BOX_MEMORY = "4096"
 CPU = "2"
 IP = "192.168.1.165"
 IP2 = "192.168.245.173"
-BRIDGE_INTERFACE = "Intel(R) 82578DM Gigabit Network Connection"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
 BRIDGE_INTERFACE2 = "VMware Virtual Ethernet Adapter for VMnet1"
 BOX_NAME = "dockervm"
 
