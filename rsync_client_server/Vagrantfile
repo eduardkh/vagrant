@@ -2,9 +2,9 @@ BOX_IMAGE = "generic/ubuntu2204"
 BOX_VERSION = "4.2.16"
 MEMORY = "2048"
 CPU = "2"
-IP = "10.200.13.162"
+IP = "192.168.1.177"
 SUBNETMASK = "255.255.248.0"
-BRIDGE_INTERFACE = "Intel(R) 82578DM Gigabit Network Connection"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
 BOX_NAME = "rsync-client"
 
 Vagrant.configure("2") do |config|
