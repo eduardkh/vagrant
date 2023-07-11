@@ -1,0 +1,26 @@
+BOX_IMAGE = "generic/ubuntu2204"
+BOX_VERSION = "4.2.16"
+BOX_MEMORY = "2048"
+CPU = "2"
+BOX_NAME = "docker-vscode-hyperv"
+
+Vagrant.configure("2") do |config|
+  config.vm.define BOX_NAME do |subconfig|
+    subconfig.vm.provider "hyperv" do |hyperv|
+      hyperv.cpus = CPU
+      hyperv.memory = BOX_MEMORY
+      hyperv.maxmemory = BOX_MEMORY
+      hyperv.vmname = BOX_NAME
+      hyperv.enable_virtualization_extensions = true
+    end
+    subconfig.vm.box = BOX_IMAGE
+    subconfig.vm.box_version = BOX_VERSION
+    subconfig.vm.box_check_update = false
+    subconfig.vm.hostname = BOX_NAME
+  end
+  # run shell commands in the BOX
+  config.vm.provision "shell", path: "install.sh", privileged: true
+  config.vm.provision "shell", path: "post_install.sh", privileged: false
+end
+
+# vagrant up --provider=hyperv
