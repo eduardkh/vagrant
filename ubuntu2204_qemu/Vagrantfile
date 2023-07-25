@@ -1,0 +1,23 @@
+BOX_IMAGE = "generic/ubuntu2204"
+BOX_VERSION = "4.2.16"
+BOX_MEMORY = "4096"
+CPU = "4"
+BOX_NAME = "ubuntu2204"
+
+Vagrant.configure("2") do |config|
+  config.vm.define BOX_NAME do |subconfig|
+    subconfig.vm.provider :qemu do |qemu|
+      qemu.cpus = CPU
+      qemu.memory = BOX_MEMORY
+      qemu.vmname = BOX_NAME
+    end
+    subconfig.vm.box = BOX_IMAGE
+    subconfig.vm.box_version = BOX_VERSION
+    subconfig.vm.box_check_update = false
+    subconfig.vm.hostname = BOX_NAME
+  end
+  # run shell commands in the BOX
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo echo "$IP $BOX_NAME" | sudo tee -a /etc/hosts
+  SHELL
+end
