@@ -1,5 +1,5 @@
-BOX_IMAGE = "generic/ubuntu2204"
-BOX_VERSION = "4.2.16"
+BOX_IMAGE = "perk/ubuntu-2204-arm64"
+BOX_VERSION = "20230712"
 BOX_MEMORY = "4096"
 CPU = "4"
 BOX_NAME = "ubuntu2204"
