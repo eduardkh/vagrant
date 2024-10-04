@@ -1,5 +1,5 @@
 BOX_IMAGE = "generic/ubuntu2204"
-BOX_VERSION = "4.2.16"
+BOX_VERSION = "4.3.12"
 BOX_MEMORY = "4096"
 CPU = "2"
 IP = "192.168.1.165"
