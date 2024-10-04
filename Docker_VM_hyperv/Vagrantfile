@@ -1,5 +1,5 @@
 BOX_IMAGE = "generic/ubuntu2204"
-BOX_VERSION = "4.2.16"
+BOX_VERSION = "4.3.12"
 BOX_MEMORY = "2048"
 CPU = "2"
 BOX_NAME = "docker-vscode-hyperv"

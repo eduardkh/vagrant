@@ -5,7 +5,7 @@ CPU = "2"
 IP = "192.168.1.165"
 SUBNETMASK = "255.255.255.0"
 BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
-BOX_NAME = "docker-vscode-vmware"
+BOX_NAME = "vscode-vmware"
 
 Vagrant.configure("2") do |config|
   config.vm.define BOX_NAME do |subconfig|

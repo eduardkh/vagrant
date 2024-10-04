@@ -7,7 +7,7 @@ NETMASK = "255.255.248.0"
 # IP2 = "192.168.188.200"
 BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
 # BRIDGE_INTERFACE2 = "VMware Virtual Ethernet Adapter for VMnet1"
-BOX_NAME = "vmware-vscode-docker"
+BOX_NAME = "vscode-vbox"
 
 Vagrant.configure("2") do |config|
   config.vm.define BOX_NAME do |subconfig|
