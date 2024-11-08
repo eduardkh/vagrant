@@ -21,6 +21,14 @@ Vagrant.configure("2") do |config|
   end
   # run shell commands in the BOX
   config.vm.provision "shell", inline: <<-SHELL
-    sudo echo "$IP $BOX_NAME" | sudo tee -a /etc/hosts
-  SHELL
+  CONNECTION_NAME=$(nmcli -t -f NAME,DEVICE connection show --active | tail -n1 | cut -d':' -f1)
+
+  echo "#{IP} #{BOX_NAME}" | sudo tee -a /etc/hosts
+  
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.addresses #{IP}/24
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.gateway 192.168.1.254
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.route-metric 0
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.method manual
+  sudo nmcli connection up "$CONNECTION_NAME"
+SHELL
 end
