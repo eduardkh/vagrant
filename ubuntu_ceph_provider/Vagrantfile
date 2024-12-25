@@ -1,0 +1,38 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/ubuntu2204" # Ubuntu 22.04 LTS
+  config.vm.box_version = "4.3.12"
+  config.vm.network "private_network", type: "dhcp", bridge: "Default Switch" # Use Default Switch for networking
+  config.vm.provider "hyperv" do |v|
+    v.memory = 2048 # Allocate memory
+    v.cpus = 2      # Allocate CPUs
+    v.vmname = "CephVM"
+  end
+
+
+  # Provisioning script
+  config.vm.provision "shell", inline: <<-SHELL
+    # Update system and install necessary tools
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y wget apt-transport-https ca-certificates curl software-properties-common lvm2
+
+    # Set a simple hostname for Ceph
+    sudo hostnamectl set-hostname ceph-node
+
+    # Install Docker
+    sudo apt remove -y docker docker-engine docker.io containerd runc || true
+    sudo apt install -y docker.io
+    sudo systemctl enable docker
+    sudo systemctl start docker
+
+    # Add the current user to the docker group
+    sudo usermod -aG docker vagrant
+
+    # Download cephadm
+    wget -O cephadm https://github.com/ceph/ceph/raw/quincy/src/cephadm/cephadm
+    chmod +x cephadm
+    sudo mv cephadm /usr/local/bin/
+
+    # Output the VM's IP address
+    echo "Machine IP Address: $(hostname -I | awk '{print $1}')"
+  SHELL
+end
