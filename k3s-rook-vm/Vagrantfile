@@ -1,0 +1,41 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/ubuntu2204" # Ubuntu 22.04 LTS
+  config.vm.box_version = "4.3.12"
+  config.vm.hostname = "k3s-rook-vm"
+  config.vm.provider "vmware_workstation" do |vb|
+    vb.memory = "4096" # Allocate sufficient memory
+    vb.cpus = 2 # Allocate sufficient CPUs
+  end
+
+  # Provisioning to install k3s
+  config.vm.provision "shell", inline: <<-SHELL
+    # Update package lists for Ubuntu 22.04
+    sudo apt update
+
+    # Install dependencies for k3s (might need adjustment)
+    sudo apt install -y curl apt-transport-https ca-certificates
+
+    # Install the k3s key
+    curl -sfL https://get.k3s.io | sh -
+
+    # Add vagrant user to the k3s group
+    sudo usermod -aG vagrant $USER
+
+    # Create the .kube directory (ensure it's before the copy command)
+    mkdir -p /home/vagrant/.kube
+
+    # Permission changes for k3s config (might need adjustment)
+    sudo cp /etc/rancher/k3s/k3s.yaml /home/vagrant/.kube/config
+    sudo chown vagrant:vagrant /home/vagrant/.kube/config
+
+    # Set the KUBECONFIG environment variable
+    export KUBECONFIG=/home/vagrant/.kube/config
+    echo "export KUBECONFIG=/home/vagrant/.kube/config" >> .bashrc
+
+    # Create directories for Rook (adjust paths if needed)
+    mkdir -p /tmp/disks/disk1
+    mkdir -p /tmp/disks/disk2
+    sudo chmod 777 /tmp/disks/disk1
+    sudo chmod 777 /tmp/disks/disk2
+  SHELL
+end
