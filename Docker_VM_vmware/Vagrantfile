@@ -3,8 +3,9 @@ BOX_VERSION = "4.3.12"
 BOX_MEMORY = "4096"
 CPU = "2"
 IP = "192.168.1.165"
-SUBNETMASK = "255.255.255.0"
 BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
+# BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (2) I219-LM"
+
 BOX_NAME = "vscode-vmware"
 
 Vagrant.configure("2") do |config|
@@ -19,11 +20,36 @@ Vagrant.configure("2") do |config|
     subconfig.vm.box_check_update = false
     # hostname and IP
     subconfig.vm.hostname = BOX_NAME
-    subconfig.vm.network :public_network, ip: IP, :device => "eth1", :adapter => 2, :netmask => SUBNETMASK, bridge: BRIDGE_INTERFACE, hostname: true
+    # subconfig.vm.network :public_network, ip: IP, :device => "eth1", :adapter => 2, :netmask => SUBNETMASK, bridge: BRIDGE_INTERFACE, hostname: true
+    subconfig.vm.network :public_network, adapter: 2, bridge: BRIDGE_INTERFACE, auto_config: false
   end
-  # run shell commands in the BOX
+
+  # FIX - WARNING:root:Cannot call Open vSwitch: ovsdb-server.service is not running.
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt update
+    sudo apt install openvswitch-switch -y
+    sudo systemctl start ovsdb-server
+    sudo systemctl enable ovsdb-server
+    sudo systemctl start ovs-vswitchd
+    sudo systemctl enable ovs-vswitchd
+  SHELL
+
+  # copy 01-netcfg.yaml to the VM from the host
+  config.vm.provision "file", source: "./01-netcfg.yaml", destination: "/tmp/01-netcfg.yaml"
+  
+  # apply network configuratin (netplan)
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo echo "$IP $BOX_NAME" | sudo tee -a /etc/hosts
+    sudo mv /tmp/01-netcfg.yaml /etc/netplan/01-netcfg.yaml
+    sudo chmod 600 /etc/netplan/*.yaml
+    sudo netplan apply
+  SHELL
+  # set hostname in hosts file
+  config.vm.provision "shell", inline: <<-SHELL
+  echo "#{IP} #{BOX_NAME}" | sudo tee -a /etc/hosts
+  SHELL
+  # install and configure Docker
   config.vm.provision "shell", path: "install.sh", privileged: true
+  # config.vm.provision "shell", path: "install.sh", privileged: true, run: "always"
   config.vm.provision "shell", path: "post_install.sh", privileged: false
-  # default route
-  config.vm.provision "shell", path: "add_dg.sh", privileged: true, run: "always"
 end
