@@ -2,8 +2,9 @@ BOX_IMAGE = "generic/ubuntu2204"
 BOX_VERSION = "4.3.12"
 BOX_MEMORY = "4096"
 CPU = "4"
-IP = "10.200.13.250"
-BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (2) I219-LM"
+IP = "192.168.1.164"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
+# BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (2) I219-LM"
 BOX_NAME = "vscode-vbox"
 
 Vagrant.configure("2") do |config|
@@ -18,6 +19,17 @@ Vagrant.configure("2") do |config|
     subconfig.vm.hostname = BOX_NAME
     subconfig.vm.network :public_network, adapter: 2, bridge: BRIDGE_INTERFACE, auto_config: false
   end
+
+  # FIX - WARNING:root:Cannot call Open vSwitch: ovsdb-server.service is not running.
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt update
+    sudo apt install openvswitch-switch -y
+    sudo systemctl start ovsdb-server
+    sudo systemctl enable ovsdb-server
+    sudo systemctl start ovs-vswitchd
+    sudo systemctl enable ovs-vswitchd
+  SHELL
+
   # copy 01-netcfg.yaml to the VM from the host
   config.vm.provision "file", source: "./01-netcfg.yaml", destination: "/tmp/01-netcfg.yaml"
   
