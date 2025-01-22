@@ -11,3 +11,6 @@ echo "install Docker with convenience script - Done"
 echo "install pip3"
 sudo apt install python3-pip -y
 echo "install pip3 - Done"
+
+# Install using APT:
+sudo apt install bash-completion -y
