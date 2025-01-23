@@ -2,9 +2,11 @@ BOX_IMAGE = "generic/rocky8"
 BOX_VERSION = "4.2.16"
 MEMORY = "4096"
 CPU = "4"
-BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
-IP = "192.168.1.154"
-DEFAULT_GATEWAY = "192.168.1.254"
+# BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (2) I219-LM"
+IP = "10.200.13.200"
+NETMASK = "255.255.248.0"
+DEFAULT_GATEWAY = "10.200.15.254"
 BOX_NAME = "rocky8"
 
 # Network configuration script
@@ -30,7 +32,7 @@ Vagrant.configure("2") do |config|
     subconfig.vm.hostname = BOX_NAME
     
     # Public network configuration
-    subconfig.vm.network :public_network, ip: IP, bridge: BRIDGE_INTERFACE
+    subconfig.vm.network :public_network, ip: IP,:netmask => NETMASK, bridge: BRIDGE_INTERFACE
 
     # Run network configuration script
     subconfig.vm.provision "shell", run: "always", inline: $network_script
