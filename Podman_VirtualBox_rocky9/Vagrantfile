@@ -1,13 +1,13 @@
-BOX_IMAGE = "generic/rocky8"
+BOX_IMAGE = "generic/rocky9"
 BOX_VERSION = "4.2.16"
-MEMORY = "4096"
+MEMORY = "8192"
 CPU = "4"
 BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
 # BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (2) I219-LM"
 IP = "192.168.1.170"
 NETMASK = "255.255.255.0"
 DEFAULT_GATEWAY = "192.168.1.254"
-BOX_NAME = "rocky8"
+BOX_NAME = "rocky9"
 
 # Network configuration script
 $network_script = <<-SCRIPT
