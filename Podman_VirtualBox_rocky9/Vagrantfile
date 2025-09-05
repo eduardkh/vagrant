@@ -42,4 +42,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     echo "#{IP} #{BOX_NAME}" | sudo tee -a /etc/hosts
   SHELL
+
+  # install and configure Podman
+  config.vm.provision "shell", path: "install.sh", privileged: true
 end
