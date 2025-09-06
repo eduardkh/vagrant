@@ -3,6 +3,7 @@
 
 echo "==>install podman"
 sudo dnf install podman -y
+sudo dnf install podman-compose -y
 
 echo "==>Enable podman service"
 sudo systemctl enable --now podman
