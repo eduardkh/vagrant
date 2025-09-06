@@ -8,5 +8,7 @@ sudo npm upgrade -g @google/gemini-cli
 ```
 
 ```bash
+# For convenience
 echo "export PODMAN_COMPOSE_WARNING_LOGS=false" >> .zshrc
+alias docker="podman"
 ```
