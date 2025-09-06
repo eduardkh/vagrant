@@ -6,3 +6,7 @@
 sudo npm install -g @google/gemini-cli
 sudo npm upgrade -g @google/gemini-cli
 ```
+
+```bash
+echo "export PODMAN_COMPOSE_WARNING_LOGS=false" >> .zshrc
+```
