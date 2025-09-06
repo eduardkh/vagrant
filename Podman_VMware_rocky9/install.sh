@@ -12,6 +12,7 @@ podman --version
 
 echo "==>Install Helm"
 sudo dnf install helm -y
+helm completion zsh > "${fpath[1]}/_helm"
 
 echo "==>Install Node.js"
 sudo dnf module reset nodejs -y
