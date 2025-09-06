@@ -1,0 +1,49 @@
+BOX_IMAGE = "generic/rocky9"
+BOX_VERSION = "4.3.12"
+MEMORY = "8192"
+CPU = "4"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
+# BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (2) I219-LM"
+IP = "192.168.1.170"
+NETMASK = "255.255.255.0"
+DEFAULT_GATEWAY = "192.168.1.254"
+BOX_NAME = "rocky9"
+
+# Network configuration script
+$network_script = <<-SCRIPT
+  CONNECTION_NAME=$(nmcli -t -f NAME,DEVICE connection show --active | tail -n1 | cut -d':' -f1)
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.gateway #{DEFAULT_GATEWAY}
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.route-metric 10
+  sudo nmcli connection up "$CONNECTION_NAME"
+
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.define BOX_NAME do |subconfig|
+    subconfig.vm.provider "vmware_desktop" do |v|
+      v.gui = true
+      v.vmx["memsize"] = MEMORY
+      v.vmx["numvcpus"] = CPU
+    end
+
+    # Box configuration
+    subconfig.vm.box = BOX_IMAGE
+    subconfig.vm.box_version = BOX_VERSION
+    subconfig.vm.box_check_update = false
+    subconfig.vm.hostname = BOX_NAME
+    
+    # Public network configuration
+    subconfig.vm.network :public_network, ip: IP,:netmask => NETMASK, bridge: BRIDGE_INTERFACE
+
+    # Run network configuration script
+    subconfig.vm.provision "shell", run: "always", inline: $network_script
+  end
+
+  # Update /etc/hosts to map hostname to IP
+  config.vm.provision "shell", inline: <<-SHELL
+    echo "#{IP} #{BOX_NAME}" | sudo tee -a /etc/hosts
+  SHELL
+
+  # install and configure Podman
+  config.vm.provision "shell", path: "install.sh", privileged: true
+end
