@@ -14,6 +14,9 @@ echo "==>Install Git and Make"
 sudo dnf install git -y
 sudo dnf install make -y
 
+echo "==>Install Node.js"
+sudo dnf install nodejs -y
+
 echo "==>Install zsh"
 git clone https://github.com/eduardkh/linux.git
 cd linux/install-zsh/
