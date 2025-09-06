@@ -14,6 +14,9 @@ echo "==>Install Helm"
 sudo dnf install helm -y
 helm completion zsh > "${fpath[1]}/_helm"
 
+echo "==>Install jq"
+sudo dnf install jq -y
+
 echo "==>Install Node.js"
 sudo dnf module reset nodejs -y
 sudo dnf module enable nodejs:20 -y        # or :22 if available
