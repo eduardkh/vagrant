@@ -41,9 +41,7 @@ sudo dnf -y install git make
 
 echo "==> Install zsh (via your repo Makefile)"
 [ -d linux ] || git clone https://github.com/eduardkh/linux.git
-cd linux/install-zsh/
-make rocky
-cd - >/dev/null || true
+echo "After logging in, run: (cd linux/install-zsh && make rocky) to install zsh for your user"
 
 echo "==> Helm zsh completion (keep original behavior; safe under bash)"
 # Your original line (works if running under zsh with $fpath set):
