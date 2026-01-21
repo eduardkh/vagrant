@@ -1,0 +1,9 @@
+# Prometheus configuration (targets: testbox node_exporter)
+# Edit targets as needed. Use the TEST_VM IP in your environment.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets: ['192.168.1.155:9100']

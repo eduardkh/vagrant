@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.5.0
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+    # To allow node_exporter to read host metrics (optional), uncomment and adjust:
+    # volumes:
+    #   - /proc:/host/proc:ro
+    #   - /sys:/host/sys:ro
+    #   - /:/host:ro,rslave
+    # command: --path.procfs=/host/proc --path.sysfs=/host/sys --collector.filesystem.ignored-mount-points

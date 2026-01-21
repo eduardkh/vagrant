@@ -1,0 +1,80 @@
+BOX_IMAGE = "generic/rocky8"
+BOX_VERSION = "4.2.16"
+MEMORY = "4096"
+CPU = "4"
+BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
+# Prometheus + test machines
+PROM_IP = "192.168.1.154"
+TEST_IP = "192.168.1.155"
+DEFAULT_GATEWAY = "192.168.1.254"
+PROM_BOX_NAME = "prometheus"
+TEST_BOX_NAME = "testbox"
+BOX_NAME = "rocky8"
+
+# Network configuration script
+$network_script = <<-SCRIPT
+  CONNECTION_NAME=$(nmcli -t -f NAME,DEVICE connection show --active | tail -n1 | cut -d':' -f1)
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.gateway #{DEFAULT_GATEWAY}
+  sudo nmcli connection modify "$CONNECTION_NAME" ipv4.route-metric 10
+  sudo nmcli connection up "$CONNECTION_NAME"
+
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  # Prometheus + Grafana VM
+  config.vm.define PROM_BOX_NAME do |prom|
+    prom.vm.provider "vmware_workstation" do |vb|
+      vb.memory = MEMORY
+      vb.cpus = CPU
+      vb.gui = true
+    end
+
+    prom.vm.box = BOX_IMAGE
+    prom.vm.box_version = BOX_VERSION
+    prom.vm.box_check_update = false
+    prom.vm.hostname = PROM_BOX_NAME
+
+    prom.vm.network :public_network, ip: PROM_IP, bridge: BRIDGE_INTERFACE
+
+    # Run network configuration script
+    prom.vm.provision "shell", run: "always", inline: $network_script
+
+    # Provision Prometheus and Grafana using Podman
+    prom.vm.provision "shell", inline: <<-SHELL
+      set -eux
+      sudo systemctl stop firewalld || true
+      sudo systemctl disable firewalld || true
+    SHELL
+  end
+
+  # Test Linux VM (node exporter)
+  config.vm.define TEST_BOX_NAME do |test|
+    test.vm.provider "vmware_workstation" do |vb|
+      vb.memory = "2048"
+      vb.cpus = "2"
+      vb.gui = true
+    end
+
+    test.vm.box = BOX_IMAGE
+    test.vm.box_version = BOX_VERSION
+    test.vm.box_check_update = false
+    test.vm.hostname = TEST_BOX_NAME
+
+    test.vm.network :public_network, ip: TEST_IP, bridge: BRIDGE_INTERFACE
+
+    test.vm.provision "shell", run: "always", inline: $network_script
+
+    # Provision node_exporter
+    test.vm.provision "shell", inline: <<-SHELL
+      set -eux
+      sudo systemctl stop firewalld || true
+      sudo systemctl disable firewalld || true
+    SHELL
+  end
+
+  # Update /etc/hosts on each VM
+  config.vm.provision "shell", inline: <<-SHELL
+    echo "#{PROM_IP} #{PROM_BOX_NAME}" | sudo tee -a /etc/hosts
+    echo "#{TEST_IP} #{TEST_BOX_NAME}" | sudo tee -a /etc/hosts
+  SHELL
+end
