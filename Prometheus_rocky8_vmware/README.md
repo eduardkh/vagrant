@@ -1,4 +1,4 @@
-Podman Compose setup for Prometheus / Grafana and test node_exporter
+# Podman Compose setup for Prometheus / Grafana and test node_exporter
 
 Overview
 
@@ -12,8 +12,8 @@ Files
 
 Quick start (on each VM)
 
-1. Ensure `podman` is installed and working.
-   - Example: `sudo dnf -y install podman`
+1. Ensure `container-tools` is installed and working.
+   - Example: `sudo dnf module install container-tools -y`
 2. Install `podman-compose` (if not present):
    - Try `sudo dnf -y install podman-compose` or `pip3 install --user podman-compose`
 
