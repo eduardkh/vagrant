@@ -1,7 +1,9 @@
 services:
   node_exporter:
     image: quay.io/prometheus/node-exporter:v1.5.0
-    network_mode: host
+    # network_mode: host
+    ports:
+      - "9100:9100"
     pid: host
     restart: unless-stopped
     volumes:
@@ -9,6 +11,7 @@ services:
       - /sys:/host/sys:ro
       - /:/host:ro,rslave
     command:
+      - --web.listen-address=:9100
       - --path.procfs=/host/proc
       - --path.sysfs=/host/sys
       - --path.rootfs=/host
