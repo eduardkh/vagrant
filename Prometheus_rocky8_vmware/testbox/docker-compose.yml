@@ -22,7 +22,5 @@ services:
     command: -config.file=/etc/promtail/promtail.yml
     volumes:
       - ./promtail.yml:/etc/promtail/promtail.yml:Z
-      - /var/log/journal:/var/log/journal:ro
-      - /etc/machine-id:/etc/machine-id:ro
-      - /run/systemd/journal/socket:/run/systemd/journal/socket
+      - /var/log/messages:/var/log/messages:ro
     restart: unless-stopped
