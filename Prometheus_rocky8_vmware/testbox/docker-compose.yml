@@ -22,5 +22,5 @@ services:
     command: -config.file=/etc/promtail/promtail.yml
     volumes:
       - ./promtail.yml:/etc/promtail/promtail.yml:Z
-      - /var/log/messages:/var/log/messages:ro
+      - /var/log/messages:/var/log/messages:ro,Z
     restart: unless-stopped
