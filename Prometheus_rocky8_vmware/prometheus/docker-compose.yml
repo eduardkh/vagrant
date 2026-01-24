@@ -1,4 +1,5 @@
 version: "3.8"
+
 services:
   prometheus:
     image: quay.io/prometheus/prometheus:v2.44.0
@@ -18,5 +19,16 @@ services:
       - grafana_data:/var/lib/grafana:Z
     restart: unless-stopped
 
+  loki:
+    image: grafana/loki:2.9.4
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./loki.yml:/etc/loki/loki.yml:Z
+      - loki_data:/loki:Z
+    restart: unless-stopped
+
 volumes:
   grafana_data: {}
+  loki_data: {}

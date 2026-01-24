@@ -15,3 +15,14 @@ services:
       - --path.procfs=/host/proc
       - --path.sysfs=/host/sys
       - --path.rootfs=/host
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    user: root
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - ./promtail.yml:/etc/promtail/promtail.yml:Z
+      - /var/log/journal:/var/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /run/systemd/journal/socket:/run/systemd/journal/socket
+    restart: unless-stopped
