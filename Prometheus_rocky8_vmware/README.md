@@ -13,9 +13,9 @@ Files
 Quick start (on each VM)
 
 1. Ensure `container-tools` is installed and working.
-   - Example: `sudo dnf module install container-tools -y`
+   - Example: `sudo dnf module install -y container-tools`
 2. Install `podman-compose` (if not present):
-   - Try `sudo dnf -y install podman-compose` or `pip3 install --user podman-compose`
+   - Try `sudo dnf install -y podman-compose` or `pip3 install --user podman-compose`
 
 Prometheus VM (run as vagrant user)
 
