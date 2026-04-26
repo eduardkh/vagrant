@@ -2,8 +2,11 @@ BOX_IMAGE = "bento/rockylinux-9"
 BOX_VERSION = "202510.26.0"
 MEMORY = "8192"
 CPU = "4"
+# Use the Windows adapter name Vagrant resolves for bridged networking.
+# The NIC description may exist, but Vagrant matches the adapter alias here.
 # BRIDGE_INTERFACE = "Intel(R) Ethernet Controller (3) I225-V"
 BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (7) I219-V"
+# & "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" list bridgedifs
 IP = "10.200.14.251"
 NETMASK = "255.255.248.0"
 DEFAULT_GATEWAY = "10.200.15.254"
