@@ -9,6 +9,7 @@ BRIDGE_INTERFACE = "Intel(R) Ethernet Connection (7) I219-V"
 # & "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" list bridgedifs
 IP = "10.200.14.251"
 NETMASK = "255.255.248.0"
+NETPREFIX = NETMASK.split(".").sum { |octet| octet.to_i.to_s(2).count("1") }
 DEFAULT_GATEWAY = "10.200.15.254"
 BOX_NAME = "rocky9"
 
@@ -26,34 +27,45 @@ Vagrant.configure("2") do |config|
     subconfig.vm.hostname = BOX_NAME
     
     # Public network configuration
-    subconfig.vm.network :public_network, ip: IP,:netmask => NETMASK, bridge: BRIDGE_INTERFACE
+    subconfig.vm.network :public_network, bridge: BRIDGE_INTERFACE, auto_config: false
 
     # Make the public NIC the persistent default route and keep the NAT NIC non-default.
     subconfig.vm.provision "shell", inline: <<-SHELL
       set -euo pipefail
 
       WAN_IP="#{IP}"
+      WAN_PREFIX="#{NETPREFIX}"
       WAN_GW="#{DEFAULT_GATEWAY}"
 
-      WAN_DEV=$(ip -o -4 addr show | awk -v ip="$WAN_IP" '$4 ~ ("^" ip "/") { print $2; exit }')
-      [ -n "$WAN_DEV" ] || { echo "No device found for #{IP}"; exit 1; }
+      MGMT_DEV=$(ip route show default | awk '{ print $5; exit }')
+      [ -n "$MGMT_DEV" ] || { echo "No default-route management device found"; exit 1; }
 
-      MGMT_DEV=$(nmcli -t -f DEVICE,TYPE,STATE device status \
-        | awk -F: -v wan="$WAN_DEV" '$2=="ethernet" && $3=="connected" && $1!=wan { print $1; exit }')
-      [ -n "$MGMT_DEV" ] || { echo "No secondary connected ethernet device found"; exit 1; }
+      WAN_DEV=$(nmcli -t -f DEVICE,TYPE device status \
+        | awk -F: -v mgmt="$MGMT_DEV" '$2=="ethernet" && $1!=mgmt { print $1; exit }')
+      [ -n "$WAN_DEV" ] || { echo "No bridged ethernet device found"; exit 1; }
 
-      WAN_CON=$(nmcli -t -f NAME,DEVICE connection show --active | awk -F: -v dev="$WAN_DEV" '$2==dev { print $1; exit }')
+      WAN_CON=$(nmcli -t -f NAME,DEVICE connection show | awk -F: -v dev="$WAN_DEV" '$2==dev { print $1; exit }')
       MGMT_CON=$(nmcli -t -f NAME,DEVICE connection show --active | awk -F: -v dev="$MGMT_DEV" '$2==dev { print $1; exit }')
-      [ -n "$WAN_CON" ] || { echo "No active connection found for $WAN_DEV"; exit 1; }
+      if [ -z "$WAN_CON" ]; then
+        WAN_CON="System $WAN_DEV"
+        sudo nmcli connection add type ethernet con-name "$WAN_CON" ifname "$WAN_DEV"
+      fi
       [ -n "$MGMT_CON" ] || { echo "No active connection found for $MGMT_DEV"; exit 1; }
 
       sudo nmcli connection modify "$WAN_CON" \
+        connection.autoconnect yes \
+        connection.interface-name "$WAN_DEV" \
+        ipv4.method manual \
+        ipv4.addresses "$WAN_IP/$WAN_PREFIX" \
         ipv4.never-default no \
         ipv4.gateway "$WAN_GW" \
         ipv4.route-metric 10
 
       sudo nmcli connection modify "$MGMT_CON" \
+        connection.autoconnect yes \
+        connection.interface-name "$MGMT_DEV" \
         ipv4.never-default yes \
+        ipv4.ignore-auto-routes yes \
         ipv4.route-metric 500
 
       sudo nmcli connection up "$WAN_CON"
