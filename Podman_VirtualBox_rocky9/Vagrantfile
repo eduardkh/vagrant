@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
     # Public network configuration
     subconfig.vm.network :public_network, bridge: BRIDGE_INTERFACE, auto_config: false
 
-    # Make the public NIC the persistent default route and keep the NAT NIC non-default.
+    # Make the public NIC the preferred default route while leaving NAT as fallback.
     subconfig.vm.provision "shell", inline: <<-SHELL
       set -euo pipefail
 
@@ -64,8 +64,6 @@ Vagrant.configure("2") do |config|
       sudo nmcli connection modify "$MGMT_CON" \
         connection.autoconnect yes \
         connection.interface-name "$MGMT_DEV" \
-        ipv4.never-default yes \
-        ipv4.ignore-auto-routes yes \
         ipv4.route-metric 500
 
       sudo nmcli connection up "$WAN_CON"
