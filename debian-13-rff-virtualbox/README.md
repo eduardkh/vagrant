@@ -138,5 +138,7 @@ grpcurl \
 	-import-path '/mnt/c/Users/ekhiaev/Desktop/frr/frr/grpc' \
 	-d '{"type":"STATE","encoding":"JSON","path":["/frr-vrf:lib/vrf[name=\"default\"]/frr-zebra:zebra/ribs/rib[afi-safi-name=\"frr-routing:ipv4-unicast\"][table-id=\"254\"]/route"]}' \
 	'192.168.56.11:50051' \
-	frr.Northbound.Get | jq -r '.data.data' | jq .
+	frr.Northbound.Get \
+      | jq -r '.data.data' \
+      | jq -r '.["frr-vrf:lib"].vrf[].["frr-zebra:zebra"].ribs.rib[].route[].prefix'
 ```
