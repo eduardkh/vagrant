@@ -121,3 +121,22 @@ grpcurl `
 	frr.Northbound.GetCapabilities
 
 ```
+
+```bash
+grpcurl \
+	-plaintext \
+	-emit-defaults \
+	-proto '/mnt/c/Users/ekhiaev/Desktop/frr/frr/grpc/frr-northbound.proto' \
+	-import-path '/mnt/c/Users/ekhiaev/Desktop/frr/frr/grpc' \
+	'192.168.56.11:50051' \
+	frr.Northbound.GetCapabilities
+
+grpcurl \
+	-plaintext \
+	-emit-defaults \
+	-proto '/mnt/c/Users/ekhiaev/Desktop/frr/frr/grpc/frr-northbound.proto' \
+	-import-path '/mnt/c/Users/ekhiaev/Desktop/frr/frr/grpc' \
+	-d '{"type":"STATE","encoding":"JSON","path":["/frr-vrf:lib/vrf[name=\"default\"]/frr-zebra:zebra/ribs/rib[afi-safi-name=\"frr-routing:ipv4-unicast\"][table-id=\"254\"]/route"]}' \
+	'192.168.56.11:50051' \
+	frr.Northbound.Get | jq -r '.data.data' | jq .
+```
