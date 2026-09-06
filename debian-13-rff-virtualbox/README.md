@@ -112,12 +112,12 @@ ssh -L 50051:127.0.0.1:50051 vagrant@192.168.56.11 # or with ssh
 # test with grpcurl
 go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
-grpcurl \
-	-plaintext \
-	-emit-defaults \
-	-proto '/C:/Users/ekhiaev/Desktop/frr/frr/grpc/frr-northbound.proto' \
-	-import-path '/C:/Users/ekhiaev/Desktop/frr/frr/grpc' \
-	'localhost:50051' \
+grpcurl `
+	-plaintext `
+	-emit-defaults `
+	-proto 'C:\Users\ekhiaev\Desktop\frr\frr\grpc\frr-northbound.proto' `
+	-import-path 'C:\Users\ekhiaev\Desktop\frr\frr\grpc' `
+	'localhost:50051' `
 	frr.Northbound.GetCapabilities
 
 ```
