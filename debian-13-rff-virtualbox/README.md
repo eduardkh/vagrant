@@ -100,3 +100,24 @@ grpcurl -plaintext -import-path /usr/local/share/frr-grpc \
 
 References: [FRR gRPC runtime configuration](https://docs.frrouting.org/en/latest/grpc.html)
 and [Debian build profiles](https://docs.frrouting.org/projects/dev-guide/en/latest/packaging-debian.html).
+
+```powershell
+# frr-northbound.proto location
+https://github.com/FRRouting/frr/tree/master/grpc
+
+# in windows (for postman or grpcurl)
+vagrant ssh router1 -- -N -L 50051:127.0.0.1:50051 # with vagrant
+ssh -L 50051:127.0.0.1:50051 vagrant@192.168.56.11 # or with ssh
+
+# test with grpcurl
+go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+
+grpcurl \
+	-plaintext \
+	-emit-defaults \
+	-proto '/C:/Users/ekhiaev/Desktop/frr/frr/grpc/frr-northbound.proto' \
+	-import-path '/C:/Users/ekhiaev/Desktop/frr/frr/grpc' \
+	'localhost:50051' \
+	frr.Northbound.GetCapabilities
+
+```
