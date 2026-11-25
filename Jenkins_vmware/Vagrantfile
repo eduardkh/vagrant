@@ -1,0 +1,59 @@
+# Milestone 1: Linux infrastructure only. Windows and Ansible follow later.
+require "ipaddr"
+
+BOX_IMAGE = "bento/rockylinux-9"
+BOX_VERSION = "202510.26.0"
+BRIDGE_INTERFACE = ENV.fetch("JENKINS_BRIDGE", "Intel(R) Ethernet Controller (3) I225-V")
+PREFIX = Integer(ENV.fetch("JENKINS_PREFIX", "24"))
+GATEWAY = ENV.fetch("JENKINS_GATEWAY", "192.168.1.254")
+DNS = ENV.fetch("JENKINS_DNS", GATEWAY)
+MACHINES = {
+  "jenkins-controller" => {
+    ip: ENV.fetch("JENKINS_CONTROLLER_IP", "192.168.1.70"),
+    memory: Integer(ENV.fetch("JENKINS_CONTROLLER_MEMORY", "8192")),
+    cpus: Integer(ENV.fetch("JENKINS_CONTROLLER_CPUS", "4"))
+  },
+  "jenkins-agent-linux" => {
+    ip: ENV.fetch("JENKINS_LINUX_IP", "192.168.1.71"),
+    memory: Integer(ENV.fetch("JENKINS_LINUX_MEMORY", "4096")),
+    cpus: Integer(ENV.fetch("JENKINS_LINUX_CPUS", "2"))
+  }
+}.freeze
+
+raise "JENKINS_PREFIX must be between 1 and 30" unless (1..30).cover?(PREFIX)
+addresses = MACHINES.values.map { |machine| machine[:ip] }
+raise "Machine addresses must be distinct" unless addresses.uniq.length == addresses.length
+(addresses + [GATEWAY] + DNS.split).each do |address|
+  raise "Expected an IPv4 address: #{address}" unless IPAddr.new(address).ipv4? && !address.include?("/")
+end
+MACHINES.each_value do |machine|
+  subnet = IPAddr.new("#{machine[:ip]}/#{PREFIX}")
+  raise "Gateway must share the VM subnet" unless subnet.include?(GATEWAY)
+  raise "VM address cannot equal gateway" if machine[:ip] == GATEWAY
+  raise "CPU and memory must be positive" unless machine[:cpus].positive? && machine[:memory].positive?
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.box = BOX_IMAGE
+  config.vm.box_version = BOX_VERSION
+  config.vm.box_check_update = false
+  # File transfer for Ansible will be agreed in milestone 2.
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  MACHINES.each do |name, settings|
+    config.vm.define name do |machine|
+      machine.vm.hostname = name
+      machine.vm.provider "vmware_desktop" do |vmware|
+        vmware.gui = true
+        vmware.vmx["displayName"] = name
+        vmware.vmx["memsize"] = settings[:memory].to_s
+        vmware.vmx["numvcpus"] = settings[:cpus].to_s
+      end
+      machine.vm.network "public_network", bridge: BRIDGE_INTERFACE, auto_config: false
+      machine.vm.provision "shell", path: "scripts/network.sh", args: [
+        settings[:ip], PREFIX.to_s, GATEWAY, DNS,
+        MACHINES.fetch("jenkins-controller")[:ip], MACHINES.fetch("jenkins-agent-linux")[:ip]
+      ]
+    end
+  end
+end
