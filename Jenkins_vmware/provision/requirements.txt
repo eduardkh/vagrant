@@ -1,0 +1,3 @@
+# Milestone 2: Ansible is installed with pip, never as an RPM.
+ansible-core==2.22.0
+argcomplete==3.8.0

@@ -1,0 +1,14 @@
+# MILESTONE 2: names resolve via the milestone 1 managed /etc/hosts block.
+all:
+  vars:
+    ansible_user: vagrant
+    ansible_python_interpreter: /usr/local/bin/python3
+  children:
+    controller:
+      hosts:
+        jenkins-controller:
+          ansible_connection: local
+    linux_agents:
+      hosts:
+        jenkins-agent-linux:
+          ansible_ssh_private_key_file: /home/vagrant/.ssh/jenkins_lab_ed25519

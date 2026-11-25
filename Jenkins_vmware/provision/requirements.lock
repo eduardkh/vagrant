@@ -1,0 +1,11 @@
+# Milestone 2: tested with dnf Python 3.14.10 on rebuilt Rocky VMs, 2026-11-25.
+ansible-core==2.22.0
+argcomplete==3.8.0
+cffi==2.1.1
+cryptography==50.0.2
+Jinja2==3.1.6
+MarkupSafe==3.0.4
+packaging==26.4
+pycparser==3.12
+PyYAML==6.0.4
+resolvelib==1.2.1

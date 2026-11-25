@@ -1,0 +1,75 @@
+---
+# MILESTONE 2: use Rocky's Python for dnf/SELinux bindings during bootstrap.
+# The validation play uses the new alternatives-managed Python.
+- name: 'Milestone 2 | Install repository Python on worker with Ansible'
+  hosts: linux_agents
+  gather_facts: false
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+  tasks:
+    - name: 'Milestone 2 | Install matching Python and pip RPMs'
+      ansible.builtin.dnf:
+        name:
+          - '{{ lab_python_rpm }}'
+          - '{{ lab_python_pip_rpm }}'
+        state: present
+        update_cache: true
+
+    - name: 'Milestone 2 | Inspect alternatives registrations'
+      ansible.builtin.command:
+        argv: [alternatives, --display, '{{ item }}']
+      loop: [python3, python]
+      register: alternatives_before
+      changed_when: false
+      failed_when: alternatives_before.rc not in [0, 2]
+
+    - name: 'Milestone 2 | Register administrator-owned Python alternatives'
+      ansible.builtin.command:
+        argv: [alternatives, --install, '/usr/local/bin/{{ item.item }}', '{{ item.item }}', '{{ lab_python_bin }}', '314']
+      loop: '{{ alternatives_before.results }}'
+      loop_control:
+        label: '{{ item.item }}'
+      when: lab_python_bin not in item.stdout
+
+    - name: 'Milestone 2 | Inspect current default executables'
+      ansible.builtin.command:
+        argv: [readlink, -f, '/usr/local/bin/{{ item }}']
+      loop: [python3, python]
+      register: defaults_before
+      changed_when: false
+
+    - name: 'Milestone 2 | Select matching Python with alternatives'
+      ansible.builtin.command:
+        argv: [alternatives, --set, '{{ item.item }}', '{{ lab_python_bin }}']
+      loop: '{{ defaults_before.results }}'
+      loop_control:
+        label: '{{ item.item }}'
+      when: item.stdout != lab_python_bin
+
+    - name: 'Milestone 2 | Prefer alternatives-managed Python in login shells'
+      ansible.builtin.copy:
+        dest: /etc/profile.d/jenkins-python.sh
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          # Milestone 2: prefer alternatives-managed Python in login shells.
+          export PATH=/usr/local/bin:$PATH
+
+- name: 'Milestone 2 | Validate controller and worker'
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: 'Milestone 2 | Assert exact Python parity'
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.python_version == lab_python_version
+        success_msg: "{{ inventory_hostname }} uses Python {{ ansible_facts.python_version }}"
+
+    - name: 'Milestone 2 | Verify package manager still works'
+      ansible.builtin.command: /usr/bin/dnf --version
+      changed_when: false
+
+    - name: 'Milestone 2 | Verify module execution'
+      ansible.builtin.ping:

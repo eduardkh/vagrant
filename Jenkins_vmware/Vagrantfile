@@ -1,4 +1,4 @@
-# Milestone 1: Linux infrastructure only. Windows and Ansible follow later.
+# Milestones 1 and 2: Linux infrastructure and controller provisioning files.
 require "ipaddr"
 
 BOX_IMAGE = "bento/rockylinux-9"
@@ -37,12 +37,18 @@ Vagrant.configure("2") do |config|
   config.vm.box = BOX_IMAGE
   config.vm.box_version = BOX_VERSION
   config.vm.box_check_update = false
-  # File transfer for Ansible will be agreed in milestone 2.
+  # Never expose .vagrant (private keys) in a guest shared folder.
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   MACHINES.each do |name, settings|
     config.vm.define name do |machine|
       machine.vm.hostname = name
+      if name == "jenkins-controller"
+        # Vagrant 2.4.9 + VMware plugin 3.0.5 cannot validate VMware shared
+        # folders (usable? signature mismatch). Transfer the source directory.
+        machine.vm.provision "milestone2-directory", type: "shell", inline: "install -d -o vagrant -g vagrant /vagrant"
+        machine.vm.provision "milestone2-files", type: "file", source: "provision/", destination: "/vagrant"
+      end
       machine.vm.provider "vmware_desktop" do |vmware|
         vmware.gui = true
         vmware.vmx["displayName"] = name
