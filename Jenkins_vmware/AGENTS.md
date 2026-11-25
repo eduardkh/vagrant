@@ -23,7 +23,7 @@ These are starting defaults, not mandatory decisions. Confirm the hypervisor, Wi
 | jenkins-agent-linux   | Rocky Linux 9                  |    2 | 4 GB | 192.168.1.71 |
 | jenkins-agent-windows | Windows Server 2022 (proposed) |    4 | 8 GB | 192.168.1.72 |
 
-VirtualBox is a proposed Vagrant provider, not a confirmed requirement. Windows box selection may require a separate evaluation-image or custom-box workflow. Keep Windows work staged if it blocks Linux progress.
+VMware workstation (bridged networking) is a proposed Vagrant provider, not a confirmed requirement. Windows box selection may require a separate evaluation-image or custom-box workflow. Keep Windows work staged if it blocks Linux progress.
 
 ## Architecture and responsibilities
 
