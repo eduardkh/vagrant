@@ -17,7 +17,7 @@ Build a reproducible Jenkins controller and Linux/Windows agents using Vagrant, 
 
 These are starting defaults, not mandatory decisions. Confirm the hypervisor, Windows box availability/licensing and network subnet with the user.
 
-| Host                  | OS                             | vCPU |  RAM | Private IP   |
+| Host                  | OS                             | vCPU |  RAM | IP           |
 | --------------------- | ------------------------------ | ---: | ---: | ------------ |
 | jenkins-controller    | Rocky Linux 9                  |    4 | 8 GB | 192.168.1.70 |
 | jenkins-agent-linux   | Rocky Linux 9                  |    2 | 4 GB | 192.168.1.71 |
@@ -39,7 +39,7 @@ VMware workstation (bridged networking) is a proposed Vagrant provider, not a co
 
 ### 1. Vagrant infrastructure (start here)
 
-Create a multi-machine Vagrantfile with the three named machines, configurable resources, private networking and internet access. Confirm provider and compatible boxes first. Bootstrap Ansible on the controller with minimal provisioning (or explicitly defer installation to milestone 2). Do not install Jenkins yet. Validate VM status, OS versions, hostnames, IPs and connectivity. Bring up Linux machines first if Windows needs additional work.
+Create a multi-machine Vagrantfile with the three named machines, configurable resources, bridged networking and internet access. Confirm provider and compatible boxes first. Bootstrap Ansible on the controller with minimal provisioning (or explicitly defer installation to milestone 2). Do not install Jenkins yet. Validate VM status, OS versions, hostnames, IPs and connectivity. Bring up Linux machines first if Windows needs additional work.
 
 ### 2. Ansible bootstrap
 
