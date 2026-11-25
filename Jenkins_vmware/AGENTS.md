@@ -17,11 +17,11 @@ Build a reproducible Jenkins controller and Linux/Windows agents using Vagrant, 
 
 These are starting defaults, not mandatory decisions. Confirm the hypervisor, Windows box availability/licensing and network subnet with the user.
 
-| Host                  | OS                             | vCPU |  RAM | Private IP    |
-| --------------------- | ------------------------------ | ---: | ---: | ------------- |
-| jenkins-controller    | Rocky Linux 9                  |    4 | 8 GB | 192.168.56.70 |
-| jenkins-agent-linux   | Rocky Linux 9                  |    2 | 4 GB | 192.168.56.71 |
-| jenkins-agent-windows | Windows Server 2022 (proposed) |    4 | 8 GB | 192.168.56.72 |
+| Host                  | OS                             | vCPU |  RAM | Private IP   |
+| --------------------- | ------------------------------ | ---: | ---: | ------------ |
+| jenkins-controller    | Rocky Linux 9                  |    4 | 8 GB | 192.168.1.70 |
+| jenkins-agent-linux   | Rocky Linux 9                  |    2 | 4 GB | 192.168.1.71 |
+| jenkins-agent-windows | Windows Server 2022 (proposed) |    4 | 8 GB | 192.168.1.72 |
 
 VirtualBox is a proposed Vagrant provider, not a confirmed requirement. Windows box selection may require a separate evaluation-image or custom-box workflow. Keep Windows work staged if it blocks Linux progress.
 
