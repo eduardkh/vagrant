@@ -1,0 +1,7 @@
+# MILESTONE 3: managed by Ansible; no credentials in this file.
+[Service]
+Environment="JAVA_HOME={{ jenkins_java_home }}"
+Environment="JENKINS_JAVA_CMD={{ jenkins_java_home }}/bin/java"
+Environment="JENKINS_PORT={{ jenkins_http_port }}"
+Environment="JENKINS_LISTEN_ADDRESS=0.0.0.0"
+Environment="JAVA_OPTS=-Djava.awt.headless=true -Xms512m -Xmx2048m"

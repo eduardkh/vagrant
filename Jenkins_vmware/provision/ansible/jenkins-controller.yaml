@@ -1,0 +1,10 @@
+---
+- name: 'Milestone 3 | Install pinned Jenkins controller and Java RPMs'
+  hosts: controller
+  become: true
+  gather_facts: true
+  vars:
+    # Rocky's interpreter has the native dnf and SELinux bindings.
+    ansible_python_interpreter: /usr/bin/python3.9
+  roles:
+    - jenkins_controller

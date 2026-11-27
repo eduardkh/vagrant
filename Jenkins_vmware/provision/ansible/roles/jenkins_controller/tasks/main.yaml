@@ -1,0 +1,151 @@
+---
+# MILESTONE 3: packages, service, permissions, LAN access and health only.
+- name: Install package-management and font prerequisites
+  ansible.builtin.dnf:
+    name: [gnupg2, fontconfig, dejavu-sans-fonts, python3-dnf-plugin-versionlock]
+    state: present
+
+- name: Import the verified Jenkins RPM signing key
+  ansible.builtin.rpm_key:
+    key: '{{ jenkins_signing_key_url }}'
+    fingerprint: '{{ jenkins_signing_key_fingerprint }}'
+    state: present
+
+- name: Configure signed Jenkins LTS repository
+  ansible.builtin.yum_repository:
+    name: jenkins
+    description: Jenkins LTS
+    baseurl: '{{ jenkins_repository_url }}'
+    gpgkey: '{{ jenkins_signing_key_url }}'
+    gpgcheck: true
+    repo_gpgcheck: true
+    enabled: true
+    sslverify: true
+
+- name: Install the pinned Java runtime before Jenkins
+  ansible.builtin.dnf:
+    name: '{{ jenkins_java_rpm }}'
+    state: present
+    update_cache: true
+
+- name: Verify the selected Java executable
+  ansible.builtin.command: '{{ jenkins_java_home }}/bin/java -version'
+  changed_when: false
+
+- name: Install the pinned Jenkins LTS RPM
+  ansible.builtin.dnf:
+    name: '{{ jenkins_rpm }}'
+    state: present
+  notify: Restart Jenkins
+
+- name: Prevent unrelated dnf upgrades from changing the tested pair
+  ansible.builtin.blockinfile:
+    path: /etc/dnf/plugins/versionlock.list
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+    marker: '# {mark} ANSIBLE JENKINS MILESTONE 3'
+    block: |
+      {% for package in jenkins_version_locks %}
+      {{ package }}
+      {% endfor %}
+
+- name: Restrict Jenkins home permissions
+  ansible.builtin.file:
+    path: /var/lib/jenkins
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0750'
+
+- name: Create managed service and initialization directories
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: directory
+    owner: root
+    group: '{{ item.group }}'
+    mode: '{{ item.mode }}'
+  loop:
+    - {path: /etc/systemd/system/jenkins.service.d, group: root, mode: '0755'}
+    - {path: /var/lib/jenkins/init.groovy.d, group: jenkins, mode: '0750'}
+
+- name: Configure the Jenkins service with the selected Java
+  ansible.builtin.template:
+    src: override.conf.j2
+    dest: /etc/systemd/system/jenkins.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Jenkins
+
+- name: Disable builds on the controller at every startup
+  ansible.builtin.copy:
+    src: 00-controller-executors.groovy
+    dest: /var/lib/jenkins/init.groovy.d/00-controller-executors.groovy
+    owner: root
+    group: jenkins
+    mode: '0640'
+  notify: Restart Jenkins
+
+- name: Ensure the firewall is active
+  ansible.builtin.systemd_service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Define the lab-only HTTP firewall rule
+  ansible.builtin.set_fact:
+    jenkins_firewall_rule: 'rule family="ipv4" source address="{{ jenkins_allowed_subnet }}" port port="{{ jenkins_http_port }}" protocol="tcp" accept'
+
+- name: Inspect permanent and runtime firewall rules
+  ansible.builtin.command:
+    argv: '{{ ["firewall-cmd", "--zone=" ~ jenkins_firewall_zone] + item.options + ["--query-rich-rule=" ~ jenkins_firewall_rule] }}'
+  loop:
+    - {label: permanent, options: [--permanent]}
+    - {label: runtime, options: []}
+  loop_control:
+    label: '{{ item.label }}'
+  register: jenkins_firewall_before
+  changed_when: false
+  failed_when: jenkins_firewall_before.rc not in [0, 1]
+
+- name: Permit Jenkins HTTP from the lab subnet
+  ansible.builtin.command:
+    argv: '{{ ["firewall-cmd", "--zone=" ~ jenkins_firewall_zone] + item.item.options + ["--add-rich-rule=" ~ jenkins_firewall_rule] }}'
+  loop: '{{ jenkins_firewall_before.results }}'
+  loop_control:
+    label: '{{ item.item.label }}'
+  when: item.rc == 1
+
+- name: Apply pending service configuration
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable Jenkins at boot and ensure it is running
+  ansible.builtin.systemd_service:
+    name: jenkins
+    daemon_reload: true
+    state: started
+    enabled: true
+
+- name: Wait for Jenkins HTTP initialization
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ jenkins_http_port }}/login'
+    status_code: [200, 403]
+    return_content: false
+  register: jenkins_http
+  until: jenkins_http.x_jenkins | default('') == jenkins_version
+  retries: 36
+  delay: 5
+
+- name: Read persisted controller configuration
+  ansible.builtin.slurp:
+    src: /var/lib/jenkins/config.xml
+  register: jenkins_config
+  no_log: true
+
+- name: Verify controller builds are disabled
+  ansible.builtin.assert:
+    that:
+      - "'<numExecutors>0</numExecutors>' in (jenkins_config.content | b64decode)"
+    success_msg: 'Jenkins {{ jenkins_version }} is reachable; controller executors = 0'

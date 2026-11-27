@@ -1,0 +1,16 @@
+{
+  "jenkins_version": "2.580.3",
+  "jenkins_rpm": "jenkins-2.580.3-1.noarch",
+  "jenkins_java_rpm": "java-25-openjdk-headless-1:25.0.5.1.2-1.1.el9.x86_64",
+  "jenkins_java_home": "/usr/lib/jvm/java-25-openjdk",
+  "jenkins_repository_url": "https://pkg.jenkins.io/rpm-stable",
+  "jenkins_signing_key_url": "https://pkg.jenkins.io/rpm-stable/jenkins.io-2026.key",
+  "jenkins_signing_key_fingerprint": "5E386EADB55F01504CAE8BCF7198F4B714ABFC68",
+  "jenkins_version_locks": [
+    "jenkins-0:2.580.3-1.*",
+    "java-25-openjdk-headless-1:25.0.5.1.2-1.1.el9.*"
+  ],
+  "jenkins_http_port": 8080,
+  "jenkins_firewall_zone": "public",
+  "jenkins_allowed_subnet": "192.168.1.0/24"
+}
