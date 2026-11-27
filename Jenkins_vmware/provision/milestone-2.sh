@@ -5,7 +5,6 @@
 set -euo pipefail
 [[ $EUID -ne 0 ]] || { echo 'Run as vagrant, not root' >&2; exit 1; }
 cd /vagrant
-source ./versions.env
 export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 venv=$HOME/.local/share/jenkins-lab/ansible
 mode=${1:---configure}
@@ -13,7 +12,18 @@ mode=${1:---configure}
 case "$mode" in
   --prepare)
     echo '[Milestone 2 / 1] Install current Python on the controller'
-    sudo bash /vagrant/install-python.sh "$PYTHON_RPM" "$PYTHON_PIP_RPM" "$PYTHON_BIN"
+    # Ansible loads group_vars automatically. Before Ansible exists, Rocky's
+    # system Python reads the same JSON settings using its standard library.
+    python_settings=$(/usr/bin/python3.9 -c '
+import json
+with open("/vagrant/ansible/group_vars/all.json") as config_file:
+    config = json.load(config_file)
+for key in ("lab_python_rpm", "lab_python_pip_rpm", "lab_python_bin"):
+    print(config[key])
+')
+    mapfile -t python_values <<< "$python_settings"
+    python_bin=${python_values[2]}
+    sudo bash /vagrant/install-python.sh "${python_values[@]}"
 
     echo '[Milestone 2 / 2] Install pinned Ansible and argcomplete with pip'
     # Inspection found no RPM Ansible installed. Refuse mixed installations if
@@ -22,7 +32,7 @@ case "$mode" in
       echo 'Remove the RPM Ansible installation before continuing' >&2
       exit 1
     fi
-    "$PYTHON_BIN" -m venv "$venv"
+    "$python_bin" -m venv "$venv"
     requirements=/vagrant/requirements.txt
     [[ ! -f /vagrant/requirements.lock ]] || requirements=/vagrant/requirements.lock
     "$venv/bin/python" -m pip install --disable-pip-version-check -r "$requirements"
@@ -58,9 +68,7 @@ case "$mode" in
     export ANSIBLE_CONFIG=/vagrant/ansible/ansible.cfg
     cd /vagrant/ansible
     echo '[Milestone 2 / 5] Use Ansible to install the SAME Python on the worker'
-    "$venv/bin/ansible-playbook" site.yaml \
-      -e "lab_python_version=$PYTHON_VERSION" -e "lab_python_bin=$PYTHON_BIN" \
-      -e "lab_python_rpm=$PYTHON_RPM" -e "lab_python_pip_rpm=$PYTHON_PIP_RPM"
+    "$venv/bin/ansible-playbook" site.yaml
     echo '[Milestone 2 / 6] Verify local + SSH module execution and sudo'
     "$venv/bin/ansible" all -m ansible.builtin.ping
     "$venv/bin/ansible" all --become -m ansible.builtin.command -a 'id -u'

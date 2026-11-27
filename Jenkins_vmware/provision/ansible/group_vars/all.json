@@ -1,0 +1,6 @@
+{
+  "lab_python_version": "3.14.10",
+  "lab_python_bin": "/usr/bin/python3.14",
+  "lab_python_rpm": "python3.14-3.14.10-1.el9_9.x86_64",
+  "lab_python_pip_rpm": "python3.14-pip-25.2-3.el9_8.5.noarch"
+}

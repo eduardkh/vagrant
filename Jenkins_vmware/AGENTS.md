@@ -10,6 +10,7 @@ Build a reproducible Jenkins controller and Linux/Windows agents using Vagrant, 
 - Start with milestone 1 only. Do not implement the entire roadmap at once.
 - Inspect the host, installed Vagrant version, available providers and boxes before choosing dependencies. Verify upstream documentation and compatibility; do not invent box names or versions.
 - Explain proposed changes, commands, validation results and blockers. Stop for user approval at milestone boundaries.
+- Document completed milestones as short numbered workflows: one terse line per step, essential commands, and one result line. Keep future milestone documentation equally brief.
 - Keep configuration version-controlled, modular and idempotent. Pin tested versions and avoid committing credentials, tokens, private keys or generated VM state.
 - Ask before destructive actions, including destroying VMs. Do not disable SELinux, firewalls or certificate verification as a shortcut.
 
