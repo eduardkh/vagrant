@@ -21,6 +21,7 @@ echarts-api:6.1.0-1321.v86c4c5114494
 eddsa-api:0.3.0.1-29.v67e9a_1c969b_b_
 email-ext:2038.v7b_8817a_499d9
 font-awesome-api:7.3.1-1013.v0835a_879ec6d
+generic-webhook-trigger:2.4.3
 git:5.11.0
 git-client:6.7.1
 github:1.47.0

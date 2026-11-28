@@ -41,12 +41,22 @@ Packages currently use upstream repositories; internal mirroring is deferred.
 ## Milestone 4 — Plugins and English UI
 
 1. Inventoried the **92 plugins** installed through the setup wizard; preserved their versions and checksums.
-2. Added **Locale**; resolved **93 pinned plugins** against Jenkins 2.580.3 with Plugin Installation Manager **2.16.0**.
-3. Ran `.\milestone-4.ps1`; verified staged archives and deployed only the new Locale archive through Ansible.
+2. Added **Locale** and **Generic Webhook Trigger 2.4.3**; resolved **94 pinned plugins** against Jenkins 2.580.3 with Plugin Installation Manager **2.16.0**.
+3. Ran `.\milestone-4.ps1`; verified staged archives and deployed the added plugins through Ansible.
 4. Configured **English**, overriding browser language preferences; restarted Jenkins.
 5. Verified all plugins active, English with Hebrew request headers, and repeatability.
 
-**Result (2026-11-27):** 93 plugins active; English UI verified with Hebrew browser headers; repeat run: **zero changes/failures**. JCasC remains milestone 5.
+**Result (2026-11-28):** 94 plugins active; English UI retained; webhook receiver verified with an unmatched-token dry run; repeat run: **zero changes/failures**. JCasC remains milestone 5.
+
+## Add or update a plugin
+
+1. Add/edit `plugin-id:version` in [plugins.txt](provision/plugins/plugins.txt), e.g. `generic-webhook-trigger:2.4.3`.
+2. Run `.\resolve-plugins.ps1` to resolve dependencies and regenerate the lock in staging.
+3. Review `git diff -- provision/plugins`; the lock contains resolved versions and SHA-256 hashes.
+4. Run `.\milestone-4.ps1` to deploy and verify; Jenkins restarts only when needed.
+
+The webhook receiver is installed; configure **Generic Webhook Trigger** on a job with a secret token credential.
+Send JSON to `http://192.168.1.70:8080/generic-webhook-trigger/invoke`; the sender must reach the lab network.
 
 ## Where Ansible ran
 

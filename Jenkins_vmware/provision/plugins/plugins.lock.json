@@ -176,6 +176,14 @@
     "disabled": false
   },
   {
+    "id": "generic-webhook-trigger",
+    "version": "2.4.3",
+    "required_core": "2.479.3",
+    "dependencies": "gson-api:2.13.1-139.v4569c2ef303f,json-path-api:2.9.0-148.v22a_7ffe323ce,credentials:1415.v831096eb_5534,plain-credentials:199.v9f8e1f741799,structs:350.v3b_30f09f2363",
+    "sha256": "710e914b04b6429bc11f7e07645966892cf31c7fc8d85a3e3637ecf9e3f7447e",
+    "disabled": false
+  },
+  {
     "id": "git",
     "version": "5.11.0",
     "required_core": "2.504.3",
