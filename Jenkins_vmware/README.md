@@ -58,9 +58,25 @@ Packages currently use upstream repositories; internal mirroring is deferred.
 
 **Result (2026-11-28):** YAML loads at startup without the setup wizard; repeat run: **zero changes/failures**.
 
-Existing `ekhiaev` password is unchanged. Fresh installs generate a password in `/etc/jenkins-lab/secrets/admin-password`.
-Back up `/etc/jenkins-lab/secrets/` outside Git to retain credentials after destroying VMs. Secret-file changes require a Jenkins restart.
 Managed UI settings are reapplied from YAML at startup; agent definitions follow in milestone 6.
+
+## Admin login and password
+
+- Username: **ekhiaev**, set by `jenkins_admin_id` in [controller.json](provision/ansible/group_vars/controller.json).
+- Password source on the controller: **/etc/jenkins-lab/secrets/admin-password** (root/Jenkins access only).
+- The file accepts **plaintext** or a **bcrypt hash prefixed with `#jbcrypt:`**. A hash cannot be read back as a password.
+- Existing passwords are preserved as hashes; fresh installs create the user automatically with a generated plaintext password.
+- Restarting hashes the password in Jenkins's user database; **it does not convert plaintext in the source file**.
+
+On the controller, view with `sudo cat /etc/jenkins-lab/secrets/admin-password`, or change it with:
+
+```bash
+sudoedit /etc/jenkins-lab/secrets/admin-password
+sudo systemctl restart jenkins
+```
+
+Use one line containing the password or prefixed hash. UI-only password changes are overwritten at startup.
+Back up `/etc/jenkins-lab/secrets/` outside Git to retain credentials after destroying VMs.
 
 ## Add or update a plugin
 
