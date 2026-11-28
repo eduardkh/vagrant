@@ -1,0 +1,87 @@
+---
+# MILESTONE 6: dedicated unprivileged worker account; Ansible still uses vagrant.
+- name: Install the controller-compatible Java runtime and basic build tools
+  ansible.builtin.dnf:
+    name:
+      - '{{ hostvars["jenkins-controller"].jenkins_java_rpm }}'
+      - '{{ jenkins_agent.git_rpm }}'
+      - make
+      - tar
+      - unzip
+      - curl
+      - python3-dnf-plugin-versionlock
+    state: present
+    update_cache: true
+
+- name: Preserve the worker Java and Git package versions
+  ansible.builtin.blockinfile:
+    path: /etc/dnf/plugins/versionlock.list
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+    marker: '# {mark} ANSIBLE JENKINS MILESTONE 6'
+    block: |
+      {% for package in hostvars['jenkins-controller'].jenkins_version_locks %}
+      {% if package.startswith('java-') %}
+      {{ package }}
+      {% endif %}
+      {% endfor %}
+      git-0:2.52.0-1.el9.*
+
+- name: Create the dedicated agent group
+  ansible.builtin.group:
+    name: '{{ jenkins_agent.username }}'
+    system: true
+
+- name: Create an SSH-only agent account without extra groups or sudo
+  ansible.builtin.user:
+    name: '{{ jenkins_agent.username }}'
+    group: '{{ jenkins_agent.username }}'
+    groups: []
+    append: false
+    home: '{{ jenkins_agent.home }}'
+    shell: /bin/bash
+    system: true
+    create_home: true
+    password_lock: true
+
+- name: Restrict home and create workspace and SSH directories
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: directory
+    owner: '{{ jenkins_agent.username }}'
+    group: '{{ jenkins_agent.username }}'
+    mode: '{{ item.mode }}'
+  loop:
+    - {path: '{{ jenkins_agent.home }}', mode: '0700'}
+    - {path: '{{ jenkins_agent.home }}/.ssh', mode: '0700'}
+    - {path: '{{ jenkins_agent.workspace }}', mode: '0750'}
+
+- name: Authorize only the dedicated Jenkins key from the controller
+  ansible.builtin.copy:
+    dest: '{{ jenkins_agent.home }}/.ssh/authorized_keys'
+    content: |
+      from="{{ jenkins_agent.controller_address }}",no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty {{ hostvars["jenkins-controller"].jenkins_agent_public_key.content | b64decode | trim }}
+    owner: '{{ jenkins_agent.username }}'
+    group: '{{ jenkins_agent.username }}'
+    mode: '0600'
+
+- name: Restore standard SELinux labels on the dedicated SSH home
+  ansible.builtin.command: 'restorecon -RF {{ jenkins_agent.home }}'
+  changed_when: false
+
+- name: Verify the selected Java runtime
+  ansible.builtin.command: '{{ hostvars["jenkins-controller"].jenkins_java_home }}/bin/java -version'
+  changed_when: false
+
+- name: Verify worker Python remains aligned with the controller
+  ansible.builtin.command: /usr/local/bin/python3 --version
+  register: jenkins_agent_python
+  changed_when: false
+  failed_when: jenkins_agent_python.stdout != 'Python ' ~ lab_python_version
+
+- name: Capture the SSH host public key over Ansible's verified SSH connection
+  ansible.builtin.slurp:
+    src: /etc/ssh/ssh_host_ed25519_key.pub
+  register: jenkins_agent_host_key

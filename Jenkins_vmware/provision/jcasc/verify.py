@@ -18,6 +18,17 @@ def verify(home, settings, source):
         'allowUserPreferences': False,
     }
     mismatches = [key for key, value in expected.items() if report.get(key) != value]
+    if settings.get('linux_agent'):
+        agent = settings['linux_agent']
+        expected_agent = {
+            'name': agent['name'], 'workspace': agent['workspace'],
+            'executors': agent['executors'], 'labels': agent['labels'], 'mode': 'EXCLUSIVE',
+            'launcher': 'hudson.plugins.sshslaves.SSHLauncher', 'host': agent['host'],
+            'credentialId': agent['credential_id'], 'credentialUser': agent['username'],
+            'verification': 'ManuallyProvidedKeyVerificationStrategy', 'hostKeyMatches': True,
+        }
+        mismatches += ['Linux agent ' + key for key, value in expected_agent.items()
+                       if report.get('linuxAgent', {}).get(key) != value]
     if report.get('failedPlugins') or report.get('lastLoaded', 0) <= 0:
         mismatches.append('JCasC/plugin startup')
     if not any(source in item for item in report.get('sources', [])):

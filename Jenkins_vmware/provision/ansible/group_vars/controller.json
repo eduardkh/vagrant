@@ -19,5 +19,18 @@
   "jenkins_java_opts": "-Djava.awt.headless=true -Xms512m -Xmx2048m",
   "jenkins_admin_id": "ekhiaev",
   "jenkins_url": "http://192.168.1.70:8080/",
-  "jenkins_webhook_credential_id": "lab-webhook-token"
+  "jenkins_webhook_credential_id": "lab-webhook-token",
+  "jenkins_linux_agent": {
+    "name": "jenkins-agent-linux",
+    "host": "jenkins-agent-linux",
+    "controller_address": "192.168.1.70",
+    "username": "jenkins-agent",
+    "home": "/home/jenkins-agent",
+    "workspace": "/var/lib/jenkins-agent",
+    "labels": "linux rocky9 ssh",
+    "executors": 1,
+    "credential_id": "linux-agent-ssh",
+    "git_rpm": "git-2.52.0-1.el9.x86_64",
+    "smoke_job": "milestone-6-linux-smoke"
+  }
 }

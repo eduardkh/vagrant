@@ -58,7 +58,21 @@ Packages currently use upstream repositories; internal mirroring is deferred.
 
 **Result (2026-11-28):** YAML loads at startup without the setup wizard; repeat run: **zero changes/failures**.
 
-Managed UI settings are reapplied from YAML at startup; agent definitions follow in milestone 6.
+Managed UI settings and agent definitions are reapplied from YAML at startup.
+
+## Milestone 6 — Linux agent over SSH
+
+1. Ran `.\milestone-6.ps1`; Ansible installed pinned Java **25.0.5.1**, Git **2.52.0** and basic build tools on the worker.
+2. Created a dedicated **jenkins-agent** account without sudo; kept Python **3.14.10** aligned with the controller.
+3. Generated a separate Jenkins SSH key and pinned the worker host key; Ansible still connects as `vagrant`.
+4. Defined **jenkins-agent-linux** through JCasC: **1 executor**, labels **linux rocky9 ssh**, workspace **/var/lib/jenkins-agent**.
+5. Ran **milestone-6-linux-smoke** on the worker; checked tools, identity, workspace writes and archived artifacts.
+
+**Result (2026-11-28):** SSH agent online; pipeline **#1 SUCCESS**; controller executors **0**; repeat run: **zero changes/failures**.
+
+Settings: [controller.json](provision/ansible/group_vars/controller.json); test pipeline: [Jenkinsfile.j2](provision/agent-linux/Jenkinsfile.j2).
+SSH credential **linux-agent-ssh** reads `/etc/jenkins-lab/secrets/linux-agent-key` on the controller; only its public key goes to the worker.
+The managed smoke job runs after configuration changes; ordinary reruns reuse its successful result.
 
 ## Admin login and password
 
@@ -100,6 +114,7 @@ ansible-playbook site.yaml                 # Milestone 2
 ansible-playbook jenkins-controller.yaml   # Milestone 3
 ansible-playbook jenkins-plugins.yaml      # Milestone 4
 ansible-playbook jenkins-jcasc.yaml        # Milestone 5
+ansible-playbook jenkins-linux-agent.yaml # Milestone 6
 ansible all -m ansible.builtin.ping
 ansible all --become -m ansible.builtin.command -a 'id -u'
 ```
@@ -110,6 +125,7 @@ ansible all --become -m ansible.builtin.command -a 'id -u'
 - Refresh files and rerun Jenkins installation: `.\milestone-3.ps1`.
 - Refresh files and rerun plugins/English configuration: `.\milestone-4.ps1`.
 - Refresh files and apply JCasC: `.\milestone-5.ps1`.
+- Refresh files and configure/test the SSH Linux agent: `.\milestone-6.ps1`.
 - After an intentional agent rebuild: `.\milestone-2.ps1 -ReenrollRebuiltAgent`.
 - Enter controller: `vagrant ssh jenkins-controller`.
 - Inside controller: `python3 --version`, `ansible --version`, or `bash /vagrant/milestone-2.sh --configure`.

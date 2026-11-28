@@ -1,0 +1,119 @@
+---
+- name: 'Milestone 6 | Prepare a separate Jenkins SSH identity'
+  hosts: controller
+  become: true
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+  tasks:
+    - name: Ensure the protected secret directory exists
+      ansible.builtin.file:
+        path: /etc/jenkins-lab/secrets
+        state: directory
+        owner: root
+        group: jenkins
+        mode: '0750'
+
+    - name: Generate a dedicated RSA key without exposing it to Git or Ansible logs
+      ansible.builtin.command:
+        argv: [ssh-keygen, -q, -t, rsa, -b, '4096', -m, PEM, -N, '', -C, jenkins-linux-agent, -f, /etc/jenkins-lab/secrets/linux-agent-key]
+        creates: /etc/jenkins-lab/secrets/linux-agent-key
+      no_log: true
+
+    - name: Restrict the private key for JCasC's service account
+      ansible.builtin.file:
+        path: /etc/jenkins-lab/secrets/linux-agent-key
+        owner: root
+        group: jenkins
+        mode: '0440'
+
+    - name: Read only the public key for worker enrollment
+      ansible.builtin.slurp:
+        src: /etc/jenkins-lab/secrets/linux-agent-key.pub
+      register: jenkins_agent_public_key
+
+- name: 'Milestone 6 | Provision the Linux build worker'
+  hosts: linux_agents
+  become: true
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+    jenkins_agent: '{{ hostvars["jenkins-controller"].jenkins_linux_agent }}'
+  roles:
+    - jenkins_linux_agent
+
+- name: 'Milestone 6 | Define the node through JCasC and verify a pipeline'
+  hosts: controller
+  become: true
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+  tasks:
+    - name: Create managed trust, feature and smoke-test directories
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: directory
+        owner: root
+        group: jenkins
+        mode: '0750'
+      loop:
+        - /etc/jenkins-lab/trust
+        - /etc/jenkins-lab/features
+        - /etc/jenkins-lab/agent-linux
+
+    - name: Pin the worker host public key obtained through verified Ansible SSH
+      ansible.builtin.copy:
+        dest: /etc/jenkins-lab/trust/linux-agent-host-key
+        content: '{{ (hostvars["jenkins-agent-linux"].jenkins_agent_host_key.content | b64decode).split()[:2] | join(" ") }}'
+        owner: root
+        group: jenkins
+        mode: '0640'
+
+    - name: Enable the Linux node once its account and trust are ready
+      ansible.builtin.copy:
+        dest: /etc/jenkins-lab/features/linux-agent
+        content: 'enabled'
+        owner: root
+        group: jenkins
+        mode: '0640'
+
+    - name: Install the visible Linux smoke-test pipeline
+      ansible.builtin.template:
+        src: /vagrant/agent-linux/Jenkinsfile.j2
+        dest: /etc/jenkins-lab/agent-linux/Jenkinsfile
+        owner: root
+        group: jenkins
+        mode: '0640'
+
+    - name: Record public smoke-test inputs
+      ansible.builtin.copy:
+        dest: /etc/jenkins-lab/agent-linux/test-spec.json
+        content: '{{ jenkins_linux_agent | combine({"java_rpm": jenkins_java_rpm, "python_version": lab_python_version}) | to_nice_json }}'
+        owner: root
+        group: jenkins
+        mode: '0640'
+
+    - name: Install controlled smoke-job creation and runtime reporting
+      ansible.builtin.copy:
+        src: /vagrant/agent-linux/98-linux-smoke.groovy
+        dest: /var/lib/jenkins/init.groovy.d/98-linux-smoke.groovy
+        owner: root
+        group: jenkins
+        mode: '0640'
+
+    - name: Validate and load the updated JCasC definition
+      ansible.builtin.import_role:
+        name: jenkins_jcasc
+
+    - name: Wait for online SSH agent and a successful pipeline on that agent
+      ansible.builtin.command: /usr/bin/python3.9 /vagrant/agent-linux/verify.py
+      register: linux_smoke
+      changed_when: false
+      until: linux_smoke.rc in [0, 2]
+      failed_when: linux_smoke.rc != 0
+      retries: 80
+      delay: 3
+
+    - name: Report Linux agent validation
+      ansible.builtin.debug:
+        msg: '{{ linux_smoke.stdout }}'

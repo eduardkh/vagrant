@@ -1,0 +1,33 @@
+// MILESTONE 6: execute only on the dedicated Linux node, never the controller.
+pipeline {
+  agent { label '{{ jenkins_linux_agent.name }}' }
+  options {
+    timeout(time: 3, unit: 'MINUTES')
+    disableConcurrentBuilds()
+    skipDefaultCheckout(true)
+  }
+  stages {
+    stage('Verify SSH Linux worker') {
+      steps {
+        sh '''set -eu
+test "$NODE_NAME" = "{{ jenkins_linux_agent.name }}"
+test "$(hostname)" = "{{ jenkins_linux_agent.name }}"
+test "$(id -un)" = "{{ jenkins_linux_agent.username }}"
+test "$(id -u)" -ne 0
+if sudo -n true >/dev/null 2>&1; then
+  echo 'The build account must not have sudo access' >&2
+  exit 1
+fi
+{{ jenkins_java_home }}/bin/java -version
+git --version
+make --version | head -n 1
+/usr/local/bin/python3 --version
+test "$(/usr/local/bin/python3 -c 'import platform; print(platform.python_version())')" = "{{ lab_python_version }}"
+printf 'SSH worker filesystem write succeeded\n' > worker-write-test.txt
+'''
+        writeFile file: 'agent-validation.txt', text: "node=${env.NODE_NAME}\nbuild=${env.BUILD_NUMBER}\n"
+        archiveArtifacts artifacts: 'agent-validation.txt,worker-write-test.txt', fingerprint: true
+      }
+    }
+  }
+}

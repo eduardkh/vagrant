@@ -33,4 +33,22 @@ def report = [
     allowUserPreferences: locale.isAllowUserPreferences(),
     failedPlugins: controller.pluginManager.failedPlugins.collect { it.name }
 ]
+{% if jenkins_linux_agent_enabled | default(false) %}
+def node = controller.getNode({{ jenkins_linux_agent.name | to_json }})
+def launcher = node?.getLauncher()
+def sshCredential = SystemCredentialsProvider.getInstance().getCredentials().find {
+    it.id == {{ jenkins_linux_agent.credential_id | to_json }}
+}
+report.linuxAgent = [
+    name: node?.getNodeName(), workspace: node?.getRemoteFS(),
+    executors: node?.getNumExecutors(), labels: node?.getLabelString(),
+    mode: node?.getMode()?.name(),
+    launcher: launcher?.getClass()?.getName(), host: launcher?.getHost(),
+    credentialId: launcher?.getCredentialsId(),
+    credentialUser: sshCredential?.getUsername(),
+    verification: launcher?.getSshHostKeyVerificationStrategy()?.getClass()?.getSimpleName(),
+    hostKeyMatches: launcher?.getSshHostKeyVerificationStrategy()?.getKey() ==
+        new File('/etc/jenkins-lab/trust/linux-agent-host-key').text.trim()
+]
+{% endif %}
 new File(controller.rootDir, 'milestone-5-jcasc.json').text = JsonOutput.prettyPrint(JsonOutput.toJson(report))

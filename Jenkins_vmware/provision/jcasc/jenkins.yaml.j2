@@ -3,6 +3,28 @@ jenkins:
   systemMessage: "Managed by Ansible and Jenkins Configuration as Code"
   numExecutors: 0
   mode: EXCLUSIVE
+{% if jenkins_linux_agent_enabled | default(false) %}
+  nodes:
+    - permanent:
+        name: {{ jenkins_linux_agent.name | to_json }}
+        remoteFS: {{ jenkins_linux_agent.workspace | to_json }}
+        numExecutors: {{ jenkins_linux_agent.executors }}
+        mode: EXCLUSIVE
+        labelString: {{ jenkins_linux_agent.labels | to_json }}
+        retentionStrategy: always
+        launcher:
+          ssh:
+            host: {{ jenkins_linux_agent.host | to_json }}
+            port: 22
+            credentialsId: {{ jenkins_linux_agent.credential_id | to_json }}
+            javaPath: {{ (jenkins_java_home ~ '/bin/java') | to_json }}
+            launchTimeoutSeconds: 60
+            maxNumRetries: 3
+            retryWaitTime: 10
+            sshHostKeyVerificationStrategy:
+              manuallyProvidedKeyVerificationStrategy:
+                key: "${readFile:/etc/jenkins-lab/trust/linux-agent-host-key}"
+{% endif %}
   securityRealm:
     local:
       allowsSignup: false
@@ -37,3 +59,13 @@ credentials:
               id: {{ jenkins_webhook_credential_id | to_json }}
               description: "Managed webhook trigger token"
               secret: "${readFile:/etc/jenkins-lab/secrets/webhook-token}"
+{% if jenkins_linux_agent_enabled | default(false) %}
+          - basicSSHUserPrivateKey:
+              scope: SYSTEM
+              id: {{ jenkins_linux_agent.credential_id | to_json }}
+              username: {{ jenkins_linux_agent.username | to_json }}
+              description: "Dedicated Linux agent SSH identity"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${readFile:/etc/jenkins-lab/secrets/linux-agent-key}"
+{% endif %}
