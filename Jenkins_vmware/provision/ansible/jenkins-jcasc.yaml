@@ -1,0 +1,10 @@
+---
+- name: 'Milestone 5 | Jenkins Configuration as Code'
+  hosts: controller
+  become: true
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+  roles:
+    - jenkins_plugins
+    - jenkins_jcasc

@@ -1,0 +1,36 @@
+// MILESTONE 5: read-only JCasC validation; report contains no secret values.
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider
+import groovy.json.JsonOutput
+import hudson.model.User
+import hudson.plugins.locale.PluginImpl
+import hudson.security.HudsonPrivateSecurityRealm
+import io.jenkins.plugins.casc.ConfigurationAsCode
+import jenkins.model.Jenkins
+import jenkins.model.JenkinsLocationConfiguration
+
+def controller = Jenkins.get()
+def casc = ConfigurationAsCode.get()
+def locale = PluginImpl.get()
+def admin = User.getById({{ jenkins_admin_id | to_json }}, false)
+def credential = SystemCredentialsProvider.getInstance().getCredentials().find {
+    it.id == {{ jenkins_webhook_credential_id | to_json }}
+}
+def report = [
+    sources: casc.getSources().collect { it.toString() },
+    lastLoaded: casc.getLastTimeLoaded().getTime(),
+    executors: controller.getNumExecutors(),
+    mode: controller.getMode().name(),
+    realm: controller.getSecurityRealm().getClass().getName(),
+    authorization: controller.getAuthorizationStrategy().getClass().getName(),
+    anonymousRead: controller.getACL().hasPermission2(Jenkins.ANONYMOUS2, Jenkins.READ),
+    signup: controller.getSecurityRealm().allowsSignup(),
+    adminExists: admin?.getProperty(HudsonPrivateSecurityRealm.Details.class) != null,
+    adminCanAdminister: admin != null && controller.getACL().hasPermission2(admin.impersonate2(), Jenkins.ADMINISTER),
+    credentialPresent: credential?.getClass()?.getName() == 'org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl',
+    url: JenkinsLocationConfiguration.get().getUrl(),
+    language: locale.getSystemLocale(),
+    ignoreBrowser: locale.isIgnoreAcceptLanguage(),
+    allowUserPreferences: locale.isAllowUserPreferences(),
+    failedPlugins: controller.pluginManager.failedPlugins.collect { it.name }
+]
+new File(controller.rootDir, 'milestone-5-jcasc.json').text = JsonOutput.prettyPrint(JsonOutput.toJson(report))

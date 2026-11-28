@@ -1,0 +1,4 @@
+# MILESTONE 5: security/account are supplied by validated JCasC before startup.
+[Service]
+Environment="CASC_JENKINS_CONFIG=/etc/jenkins-lab/jcasc/jenkins.yaml"
+Environment="JAVA_OPTS={{ jenkins_java_opts }} -Djenkins.install.runSetupWizard=false"

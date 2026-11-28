@@ -1,0 +1,157 @@
+---
+# MILESTONE 5: preserve credentials; validate a fresh isolated home before promotion.
+- name: Validate non-secret account settings
+  ansible.builtin.assert:
+    that:
+      - jenkins_admin_id is match('^[A-Za-z0-9_-]+$')
+      - jenkins_url is match('^https?://')
+
+- name: Create protected configuration, secret, backup and validation directories
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: directory
+    owner: root
+    group: '{{ item.group }}'
+    mode: '{{ item.mode }}'
+  loop:
+    - {path: /usr/local/lib/jenkins-lab/jcasc, group: root, mode: '0755'}
+    - {path: /etc/jenkins-lab/jcasc, group: jenkins, mode: '0750'}
+    - {path: /etc/jenkins-lab/secrets, group: jenkins, mode: '0750'}
+    - {path: /var/backups/jenkins-lab, group: root, mode: '0700'}
+    - {path: /var/lib/jenkins-jcasc-validation, group: jenkins, mode: '0750'}
+
+- name: Install annotated JCasC inspection and validation helpers
+  ansible.builtin.copy:
+    src: '/vagrant/jcasc/{{ item }}'
+    dest: '/usr/local/lib/jenkins-lab/jcasc/{{ item }}'
+    owner: root
+    group: root
+    mode: '0755'
+  loop: [inspect.py, prepare-secrets.py, backup.py, verify.py, validate.py]
+
+- name: Inspect security and credential identifiers without exporting secrets
+  ansible.builtin.command: /usr/bin/python3.9 /usr/local/lib/jenkins-lab/jcasc/inspect.py
+  register: jcasc_before
+  changed_when: false
+
+- name: Preserve unmanaged credentials and unfamiliar authentication providers
+  ansible.builtin.assert:
+    that:
+      - (jcasc_before.stdout | from_json).realm == 'hudson.security.HudsonPrivateSecurityRealm'
+      - (jcasc_before.stdout | from_json).credential_ids | difference([jenkins_webhook_credential_id]) | length == 0
+    fail_msg: 'Reconcile existing credentials or the authentication provider before applying this YAML; no secrets have been overwritten.'
+
+- name: Save a protected pre-JCasC configuration snapshot
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/jcasc/backup.py]
+    creates: /var/backups/jenkins-lab/pre-jcasc.tar.gz
+
+- name: Preserve the current admin password or generate fresh bootstrap secrets
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/jcasc/prepare-secrets.py, '{{ jenkins_admin_id }}']
+  register: jcasc_secrets
+  changed_when: jcasc_secrets.rc == 0 and (jcasc_secrets.stdout | from_json).changed
+  no_log: true
+
+- name: Restrict secret files to root and the Jenkins service group
+  ansible.builtin.file:
+    path: '/etc/jenkins-lab/secrets/{{ item }}'
+    owner: root
+    group: jenkins
+    mode: '0440'
+  loop: [admin-password, admin-name, admin-description, webhook-token]
+
+- name: Render the candidate Jenkins configuration
+  ansible.builtin.template:
+    src: /vagrant/jcasc/jenkins.yaml.j2
+    dest: /etc/jenkins-lab/jcasc/candidate.yaml
+    owner: root
+    group: jenkins
+    mode: '0640'
+
+- name: Render read-only runtime verification
+  ansible.builtin.template:
+    src: runtime-check.groovy.j2
+    dest: /etc/jenkins-lab/jcasc/runtime-check.groovy
+    owner: root
+    group: jenkins
+    mode: '0640'
+
+- name: Record public expectations for validation
+  ansible.builtin.copy:
+    dest: /etc/jenkins-lab/jcasc/settings.json
+    content: "{{ {'admin_id': jenkins_admin_id, 'url': jenkins_url, 'java_home': jenkins_java_home} | to_nice_json }}"
+    owner: root
+    group: jenkins
+    mode: '0640'
+
+- name: Validate candidate startup in a separate loopback-only Jenkins home
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/jcasc/validate.py, /etc/jenkins-lab/jcasc/candidate.yaml, /etc/jenkins-lab/jcasc/settings.json]
+  register: jcasc_validation
+  changed_when: jcasc_validation.rc == 0 and (jcasc_validation.stdout | from_json).changed
+
+- name: Promote only the validated YAML to the live configuration path
+  ansible.builtin.copy:
+    src: /etc/jenkins-lab/jcasc/candidate.yaml
+    dest: /etc/jenkins-lab/jcasc/jenkins.yaml
+    remote_src: true
+    owner: root
+    group: jenkins
+    mode: '0640'
+    backup: true
+  notify: Restart Jenkins for JCasC
+
+- name: Activate the JCasC startup source and skip the manual setup wizard
+  ansible.builtin.template:
+    src: zz-jcasc.conf.j2
+    dest: /etc/systemd/system/jenkins.service.d/zz-jcasc.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify: Restart Jenkins for JCasC
+
+- name: Make the pre-JCasC executor script a bootstrap fallback only
+  ansible.builtin.copy:
+    src: /vagrant/ansible/roles/jenkins_controller/files/00-controller-executors.groovy
+    dest: /var/lib/jenkins/init.groovy.d/00-controller-executors.groovy
+    owner: root
+    group: jenkins
+    mode: '0640'
+  notify: Restart Jenkins for JCasC
+
+- name: Install read-only JCasC startup validation
+  ansible.builtin.copy:
+    src: /etc/jenkins-lab/jcasc/runtime-check.groovy
+    dest: /var/lib/jenkins/init.groovy.d/95-jcasc-validation.groovy
+    remote_src: true
+    owner: root
+    group: jenkins
+    mode: '0640'
+  notify: Restart Jenkins for JCasC
+
+- name: Load the validated settings
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for English HTTP access after JCasC startup
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ jenkins_http_port }}/login'
+    headers:
+      Accept-Language: 'he-IL,he;q=0.9'
+    status_code: 200
+    return_content: false
+  register: jcasc_http
+  until: jcasc_http.x_jenkins_language | default('') == 'en'
+  retries: 36
+  delay: 5
+
+- name: Verify applied settings, admin access and password preservation
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/jcasc/verify.py, /var/lib/jenkins, /etc/jenkins-lab/jcasc/settings.json, /etc/jenkins-lab/jcasc/jenkins.yaml]
+  register: jcasc_live_validation
+  changed_when: false
+
+- name: Report JCasC validation
+  ansible.builtin.debug:
+    msg: '{{ jcasc_live_validation.stdout }}'

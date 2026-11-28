@@ -46,7 +46,21 @@ Packages currently use upstream repositories; internal mirroring is deferred.
 4. Configured **English**, overriding browser language preferences; restarted Jenkins.
 5. Verified all plugins active, English with Hebrew request headers, and repeatability.
 
-**Result (2026-11-28):** 94 plugins active; English UI retained; webhook receiver verified with an unmatched-token dry run; repeat run: **zero changes/failures**. JCasC remains milestone 5.
+**Result (2026-11-28):** 94 plugins active; English UI retained; webhook receiver verified with an unmatched-token dry run; repeat run: **zero changes/failures**.
+
+## Milestone 5 — Jenkins Configuration as Code
+
+1. Pinned JCasC **2151.va_012b_08f3cc4** and its dependency; **96 plugins** active.
+2. Ran `.\milestone-5.ps1`; saved a protected configuration snapshot and preserved the existing admin password.
+3. Defined URL, zero executors, English, admin-only permissions and a file-backed webhook credential in [JCasC YAML](provision/jcasc/jenkins.yaml.j2).
+4. Validated startup in a fresh, isolated Jenkins home; then activated YAML on the live controller.
+5. Verified admin access, unchanged password hash, blocked anonymous access and repeatability.
+
+**Result (2026-11-28):** YAML loads at startup without the setup wizard; repeat run: **zero changes/failures**.
+
+Existing `ekhiaev` password is unchanged. Fresh installs generate a password in `/etc/jenkins-lab/secrets/admin-password`.
+Back up `/etc/jenkins-lab/secrets/` outside Git to retain credentials after destroying VMs. Secret-file changes require a Jenkins restart.
+Managed UI settings are reapplied from YAML at startup; agent definitions follow in milestone 6.
 
 ## Add or update a plugin
 
@@ -55,7 +69,7 @@ Packages currently use upstream repositories; internal mirroring is deferred.
 3. Review `git diff -- provision/plugins`; the lock contains resolved versions and SHA-256 hashes.
 4. Run `.\milestone-4.ps1` to deploy and verify; Jenkins restarts only when needed.
 
-The webhook receiver is installed; configure **Generic Webhook Trigger** on a job with a secret token credential.
+The webhook receiver is installed; select **lab-webhook-token** as a job's Generic Webhook Trigger token credential. No job is configured yet.
 Send JSON to `http://192.168.1.70:8080/generic-webhook-trigger/invoke`; the sender must reach the lab network.
 
 ## Where Ansible ran
@@ -69,6 +83,7 @@ export ANSIBLE_CONFIG=/vagrant/ansible/ansible.cfg
 ansible-playbook site.yaml                 # Milestone 2
 ansible-playbook jenkins-controller.yaml   # Milestone 3
 ansible-playbook jenkins-plugins.yaml      # Milestone 4
+ansible-playbook jenkins-jcasc.yaml        # Milestone 5
 ansible all -m ansible.builtin.ping
 ansible all --become -m ansible.builtin.command -a 'id -u'
 ```
@@ -78,12 +93,14 @@ ansible all --become -m ansible.builtin.command -a 'id -u'
 - Refresh files and rerun: `.\milestone-2.ps1`.
 - Refresh files and rerun Jenkins installation: `.\milestone-3.ps1`.
 - Refresh files and rerun plugins/English configuration: `.\milestone-4.ps1`.
+- Refresh files and apply JCasC: `.\milestone-5.ps1`.
 - After an intentional agent rebuild: `.\milestone-2.ps1 -ReenrollRebuiltAgent`.
 - Enter controller: `vagrant ssh jenkins-controller`.
 - Inside controller: `python3 --version`, `ansible --version`, or `bash /vagrant/milestone-2.sh --configure`.
 - Pins (loaded automatically): [group_vars/all.json](provision/ansible/group_vars/all.json), [requirements.lock](provision/requirements.lock).
 - Jenkins/Java pins and repository settings: [group_vars/controller.json](provision/ansible/group_vars/controller.json).
 - Plugin pins: [plugins.txt](provision/plugins/plugins.txt); resolved versions/checksums: [plugins.lock.json](provision/plugins/plugins.lock.json).
+- JCasC: [source template](provision/jcasc/jenkins.yaml.j2); deployed to `/etc/jenkins-lab/jcasc/jenkins.yaml`.
 - Workflow: [shell script](provision/milestone-2.sh), [worker playbook](provision/ansible/site.yaml).
 
 Python defaults use alternatives under `/usr/local/bin`; Rocky's Python 3.9 remains for OS tools.

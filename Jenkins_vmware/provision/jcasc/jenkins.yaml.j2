@@ -1,0 +1,39 @@
+# MILESTONE 5: desired Jenkins settings. Secret values stay outside Git.
+jenkins:
+  systemMessage: "Managed by Ansible and Jenkins Configuration as Code"
+  numExecutors: 0
+  mode: EXCLUSIVE
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: {{ jenkins_admin_id | to_json }}
+          name: "${readFile:/etc/jenkins-lab/secrets/admin-name}"
+          description: "${readFile:/etc/jenkins-lab/secrets/admin-description}"
+          password: "${readFile:/etc/jenkins-lab/secrets/admin-password}"
+  authorizationStrategy:
+    globalMatrix:
+      entries:
+        - user:
+            name: {{ jenkins_admin_id | to_json }}
+            permissions:
+              - "Overall/Administer"
+  crumbIssuer:
+    standard: {}
+unclassified:
+  location:
+    url: {{ jenkins_url | to_json }}
+appearance:
+  locale:
+    systemLocale: en
+    ignoreAcceptLanguage: true
+    allowUserPreferences: false
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: {{ jenkins_webhook_credential_id | to_json }}
+              description: "Managed webhook trigger token"
+              secret: "${readFile:/etc/jenkins-lab/secrets/webhook-token}"

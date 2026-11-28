@@ -104,6 +104,14 @@
     "disabled": false
   },
   {
+    "id": "configuration-as-code",
+    "version": "2151.va_012b_08f3cc4",
+    "required_core": "2.541.1",
+    "dependencies": "caffeine-api:3.2.3-194.v31a_b_f7a_b_5a_81,commons-lang3-api:3.20.0-109.ve43756e2d2b_4,commons-text-api:1.15.0-218.va_61573470393,json-api:20251224-185.v0cc18490c62c,nimbus-jose-jwt-api:10.10-12.vd4e6d651b_7f7,prism-api:1.30.0-717.vb_f8360844b_53,snakeyaml-api:2.5-149.v72471e9c6371",
+    "sha256": "851b00c67af02c3a6ddc1eafec61861412493ee7e177b2854f5a39e52d3e4939",
+    "disabled": false
+  },
+  {
     "id": "credentials",
     "version": "1521.v1e4763284417",
     "required_core": "2.555.3",
@@ -429,6 +437,14 @@
     "required_core": "2.479.3",
     "dependencies": "mina-sshd-api-common:2.20.1-199.v8ce76b_c93542,ssh-credentials:355.v9b_e5b_cde5003;resolution:=optional",
     "sha256": "b47c79efc0d435716a6df6c5e1bdefe73e3d8ee8ea884842e203ee36ac41f532",
+    "disabled": false
+  },
+  {
+    "id": "nimbus-jose-jwt-api",
+    "version": "10.10-12.vd4e6d651b_7f7",
+    "required_core": "2.479.3",
+    "dependencies": "",
+    "sha256": "4facac360901d984a1776dbd06731757e629bfa760b6eacde043d76ea4df9d74",
     "disabled": false
   },
   {
