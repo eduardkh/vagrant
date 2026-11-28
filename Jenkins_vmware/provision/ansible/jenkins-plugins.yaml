@@ -1,0 +1,9 @@
+---
+- name: 'Milestone 4 | Pinned plugins and English Jenkins UI'
+  hosts: controller
+  become: true
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+  roles:
+    - jenkins_plugins

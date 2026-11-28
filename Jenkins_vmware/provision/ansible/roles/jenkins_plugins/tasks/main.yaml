@@ -1,0 +1,144 @@
+---
+# MILESTONE 4: resolve in staging, verify locked bytes, deploy atomically.
+- name: Load the reviewed plugin lock and staging identity
+  ansible.builtin.set_fact:
+    jenkins_plugin_lock: "{{ lookup('ansible.builtin.file', '/vagrant/plugins/plugins.lock.json') | from_json }}"
+    jenkins_plugin_stage: "/var/cache/jenkins-plugin-manager/{{ jenkins_version }}/{{ lookup('ansible.builtin.file', '/vagrant/plugins/plugins.txt', rstrip=False) | hash('sha256') }}"
+    jenkins_plugin_manager: '/opt/jenkins-plugin-manager/jenkins-plugin-manager-{{ jenkins_plugin_manager_version }}.jar'
+
+- name: Create plugin-management directories
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /opt/jenkins-plugin-manager
+    - /usr/local/lib/jenkins-lab/plugins
+    - /etc/jenkins-lab/plugins
+    - '{{ jenkins_plugin_stage }}'
+
+- name: Download the pinned official plugin manager with checksum verification
+  ansible.builtin.get_url:
+    url: '{{ jenkins_plugin_manager_url }}'
+    checksum: '{{ jenkins_plugin_manager_checksum }}'
+    dest: '{{ jenkins_plugin_manager }}'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install manifest and resolved lock
+  ansible.builtin.copy:
+    src: '/vagrant/plugins/{{ item }}'
+    dest: '/etc/jenkins-lab/plugins/{{ item }}'
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [plugins.txt, plugins.lock.json]
+
+- name: Install annotated plugin resolution and verification helpers
+  ansible.builtin.copy:
+    src: '/vagrant/plugins/{{ item }}'
+    dest: '/usr/local/lib/jenkins-lab/plugins/{{ item }}'
+    owner: root
+    group: root
+    mode: '0755'
+  loop: [resolve.sh, inventory.py, verify.py]
+
+- name: Resolve pinned plugins and dependencies against the installed Jenkins WAR
+  ansible.builtin.command:
+    argv:
+      - /bin/bash
+      - /usr/local/lib/jenkins-lab/plugins/resolve.sh
+      - '{{ jenkins_java_home }}/bin/java'
+      - '{{ jenkins_plugin_manager }}'
+      - /etc/jenkins-lab/plugins/plugins.txt
+      - '{{ jenkins_plugin_stage }}'
+      - '{{ jenkins_version }}'
+    creates: '{{ jenkins_plugin_stage }}/.resolved'
+
+- name: Verify every staged plugin version and SHA-256 checksum
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/plugins/verify.py, verify, '{{ jenkins_plugin_stage }}/plugins', /etc/jenkins-lab/plugins/plugins.lock.json]
+  changed_when: false
+
+- name: Cache the successful resolution
+  ansible.builtin.copy:
+    dest: '{{ jenkins_plugin_stage }}/.resolved'
+    content: '{{ jenkins_version }}'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Compare live archives with the reviewed lock
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/plugins/verify.py, plan, /var/lib/jenkins/plugins, /etc/jenkins-lab/plugins/plugins.lock.json]
+  register: jenkins_plugin_plan
+  changed_when: false
+
+- name: Deploy only missing or changed manager-resolved plugin archives
+  ansible.builtin.copy:
+    src: '{{ jenkins_plugin_stage }}/plugins/{{ item.id }}.jpi'
+    dest: '/var/lib/jenkins/plugins/{{ item.id }}.jpi'
+    remote_src: true
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+    backup: true
+  loop: '{{ jenkins_plugin_plan.stdout | from_json }}'
+  loop_control:
+    label: '{{ item.id }}:{{ item.version }}'
+  notify: Restart Jenkins after plugin changes
+
+- name: Enforce English and record plugin load status at startup
+  ansible.builtin.copy:
+    src: 10-english-and-plugin-validation.groovy
+    dest: /var/lib/jenkins/init.groovy.d/10-english-and-plugin-validation.groovy
+    owner: root
+    group: jenkins
+    mode: '0640'
+  notify: Restart Jenkins after plugin changes
+
+- name: Check whether browser-language overrides need to be reapplied
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ jenkins_http_port }}/login'
+    headers:
+      Accept-Language: 'he-IL,he;q=0.9'
+    status_code: [200, 403]
+    return_content: false
+  register: jenkins_language_before
+  changed_when: jenkins_language_before.x_jenkins_language | default('') != 'en'
+  notify: Restart Jenkins after plugin changes
+
+- name: Restart only when plugins or English configuration changed
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify HTTP access is English even for a Hebrew-preferring browser
+  ansible.builtin.uri:
+    url: 'http://127.0.0.1:{{ jenkins_http_port }}/login'
+    headers:
+      Accept-Language: 'he-IL,he;q=0.9'
+    status_code: [200, 403]
+    return_content: false
+  register: jenkins_plugins_http
+  until:
+    - jenkins_plugins_http.x_jenkins | default('') == jenkins_version
+    - jenkins_plugins_http.x_jenkins_language | default('') == 'en'
+  retries: 36
+  delay: 5
+
+- name: Verify live plugin versions and archive checksums
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/plugins/verify.py, verify, /var/lib/jenkins/plugins, /etc/jenkins-lab/plugins/plugins.lock.json]
+  changed_when: false
+
+- name: Verify every locked plugin loaded and English settings are active
+  ansible.builtin.command:
+    argv: [/usr/bin/python3.9, /usr/local/lib/jenkins-lab/plugins/verify.py, runtime, /var/lib/jenkins/milestone-4-plugins.json, /etc/jenkins-lab/plugins/plugins.lock.json]
+  register: jenkins_plugin_validation
+  changed_when: false
+
+- name: Report plugin and language validation
+  ansible.builtin.debug:
+    msg: '{{ jenkins_plugin_validation.stdout }}'

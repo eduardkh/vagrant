@@ -12,5 +12,8 @@
   ],
   "jenkins_http_port": 8080,
   "jenkins_firewall_zone": "public",
-  "jenkins_allowed_subnet": "192.168.1.0/24"
+  "jenkins_allowed_subnet": "192.168.1.0/24",
+  "jenkins_plugin_manager_version": "2.16.0",
+  "jenkins_plugin_manager_url": "https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/2.16.0/jenkins-plugin-manager-2.16.0.jar",
+  "jenkins_plugin_manager_checksum": "sha256:b3e9704f8259ec3d0479703039e2ad5a0a15abb97808ad70d5a59ba2fdd73197"
 }

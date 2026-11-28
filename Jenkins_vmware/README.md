@@ -35,19 +35,30 @@ Run host commands from `Jenkins_vmware` in PowerShell. Windows is deferred.
 4. Enabled Jenkins at boot; allowed port **8080** from **192.168.1.0/24**.
 5. Set controller executors to **0**; verified HTTP access and repeatability.
 
-**Result (2026-11-27):** [Jenkins unlock screen](http://192.168.1.70:8080) reachable; both RPM locks verified; repeat run: **zero changes/failures**. Plugins and JCasC follow in milestones 4–5.
+**Result (2026-11-27):** [Jenkins UI](http://192.168.1.70:8080) reachable; both RPM locks verified; repeat run: **zero changes/failures**.
 Packages currently use upstream repositories; internal mirroring is deferred.
+
+## Milestone 4 — Plugins and English UI
+
+1. Inventoried the **92 plugins** installed through the setup wizard; preserved their versions and checksums.
+2. Added **Locale**; resolved **93 pinned plugins** against Jenkins 2.580.3 with Plugin Installation Manager **2.16.0**.
+3. Ran `.\milestone-4.ps1`; verified staged archives and deployed only the new Locale archive through Ansible.
+4. Configured **English**, overriding browser language preferences; restarted Jenkins.
+5. Verified all plugins active, English with Hebrew request headers, and repeatability.
+
+**Result (2026-11-27):** 93 plugins active; English UI verified with Hebrew browser headers; repeat run: **zero changes/failures**. JCasC remains milestone 5.
 
 ## Where Ansible ran
 
 On **jenkins-controller**, as **vagrant**, from **/vagrant/ansible**; controller uses a local connection, worker uses SSH.
-Host wrappers invoke `milestone-2.sh --configure` or `milestone-3.sh`. After `vagrant ssh jenkins-controller`:
+Host wrappers invoke the corresponding `milestone-*.sh`. After `vagrant ssh jenkins-controller`:
 
 ```bash
 cd /vagrant/ansible
 export ANSIBLE_CONFIG=/vagrant/ansible/ansible.cfg
 ansible-playbook site.yaml                 # Milestone 2
 ansible-playbook jenkins-controller.yaml   # Milestone 3
+ansible-playbook jenkins-plugins.yaml      # Milestone 4
 ansible all -m ansible.builtin.ping
 ansible all --become -m ansible.builtin.command -a 'id -u'
 ```
@@ -56,11 +67,13 @@ ansible all --become -m ansible.builtin.command -a 'id -u'
 
 - Refresh files and rerun: `.\milestone-2.ps1`.
 - Refresh files and rerun Jenkins installation: `.\milestone-3.ps1`.
+- Refresh files and rerun plugins/English configuration: `.\milestone-4.ps1`.
 - After an intentional agent rebuild: `.\milestone-2.ps1 -ReenrollRebuiltAgent`.
 - Enter controller: `vagrant ssh jenkins-controller`.
 - Inside controller: `python3 --version`, `ansible --version`, or `bash /vagrant/milestone-2.sh --configure`.
 - Pins (loaded automatically): [group_vars/all.json](provision/ansible/group_vars/all.json), [requirements.lock](provision/requirements.lock).
 - Jenkins/Java pins and repository settings: [group_vars/controller.json](provision/ansible/group_vars/controller.json).
+- Plugin pins: [plugins.txt](provision/plugins/plugins.txt); resolved versions/checksums: [plugins.lock.json](provision/plugins/plugins.lock.json).
 - Workflow: [shell script](provision/milestone-2.sh), [worker playbook](provision/ansible/site.yaml).
 
 Python defaults use alternatives under `/usr/local/bin`; Rocky's Python 3.9 remains for OS tools.
